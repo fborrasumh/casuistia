@@ -1,57 +1,44 @@
 {
   "case_engine_version": "1.0.0",
   "case": {
-    "case_id": "BIO_DM_001",
+    "case_id": "BIO_DM_002",
     "version": "1.0",
     "status": "draft",
     "metadata": {
-      "title": "Valoración del Riesgo en Cribado de Cáncer Colorrectal",
-      "subtitle": "Bioestadística en medicina clínica",
+      "title": "Un positivo no es un diagnóstico",
+      "subtitle": "Interpretación de una prueba de cribado de cáncer colorrectal",
       "discipline": "Bioestadística, grado de Medicina",
       "specialty": "Atención Primaria",
       "target": "Bioestadística, grado de Medicina",
       "difficulty": "medium",
-      "estimated_time_minutes": 36,
-      "maximum_score": 30
+      "estimated_time_minutes": 42,
+      "maximum_score": 16
     },
     "description": {
-      "intro": "En este caso clínico, se presenta una situación donde un programa de cribado de cáncer colorrectal produce resultados positivos en pacientes. Tu tarea es evaluar y comunicar adecuadamente las probabilidades a los pacientes angustiados, considerando la sensibilidad, la especificidad y la prevalencia de la enfermedad.",
+      "intro": "En tu cupo se utiliza una prueba de cribado con una sensibilidad del 90 % y una especificidad del 95 %. Varias personas han recibido un resultado positivo y esperan que les digas directamente si tienen cáncer. Tendrás que distinguir qué informa cada medida, calcular el riesgo real y comunicarlo sin convertir una probabilidad en una certeza.",
       "student_role": "Eres quien analiza los datos."
     },
-    "variables": {
-      "prevalencia": {
-        "type": "integer_range",
-        "min": 1,
-        "max": 100,
-        "default": 51
-      },
-      "pacientes_totales": {
-        "type": "integer_range",
-        "min": 50,
-        "max": 500,
-        "default": 275
-      }
-    },
+    "variables": {},
     "competencies": [
       {
         "id": "C01",
-        "name": "Comprensión de pruebas diagnósticas",
+        "name": "Distinguir sensibilidad, especificidad y valores predictivos",
         "weight": 0.25
       },
       {
         "id": "C02",
-        "name": "Interpretación de resultados",
+        "name": "Razonar el efecto de la prevalencia sobre un resultado positivo",
         "weight": 0.25
       },
       {
         "id": "C03",
-        "name": "Comunicación efectiva",
-        "weight": 0.25
+        "name": "Calcular e interpretar una probabilidad posprueba",
+        "weight": 0.3
       },
       {
         "id": "C04",
-        "name": "Razonamiento estadístico",
-        "weight": 0.25
+        "name": "Comunicar incertidumbre clínica con claridad",
+        "weight": 0.2
       }
     ],
     "rubrics": [
@@ -102,66 +89,112 @@
         "stage_id": "S01",
         "order": 1,
         "type": "clinical_intro",
-        "title": "Introducción a la Sensibilidad y Especificidad",
-        "objective": "Diferenciar la sensibilidad y la especificidad de la prueba utilizada.",
+        "title": "La primera conversación",
+        "objective": "Explicar con tus palabras la diferencia entre sensibilidad, especificidad y valor predictivo positivo.",
         "question": {
           "question_id": "Q1",
           "type": "open_text",
-          "text": "Define en tus propias palabras qué significan sensibilidad y especificidad.",
+          "text": "Responde a la paciente y define qué significa cada una de las tres medidas, indicando especialmente de qué grupo parte cada una.",
           "required": true
         },
         "evaluation": {
-          "type": "rule",
-          "maximum_score": 5,
+          "type": "semantic",
+          "maximum_score": 3,
           "criteria": [
             {
-              "id": "C1",
-              "description": "El estudiante define correctamente la sensibilidad."
+              "id": "CR01",
+              "description": "Explica que la sensibilidad es la proporción de personas enfermas que obtienen un resultado positivo."
             },
             {
-              "id": "C2",
-              "description": "El estudiante define correctamente la especificidad."
+              "id": "CR02",
+              "description": "Explica que la especificidad es la proporción de personas no enfermas que obtienen un resultado negativo."
+            },
+            {
+              "id": "CR03",
+              "description": "Explica que el valor predictivo positivo es la proporción de personas realmente enfermas entre quienes obtienen un resultado positivo."
+            },
+            {
+              "id": "CR04",
+              "description": "Aclara que sensibilidad y especificidad no responden directamente a la probabilidad de enfermedad de una persona con resultado positivo."
             }
-          ]
+          ],
+          "rubric_id": "RUB01"
         },
         "next": {
           "default": "S02"
         },
         "narrative": {
-          "text": "Recibes los resultados de una nueva prueba de cribado para cáncer colorrectal. La prueba tiene una sensibilidad del 90% y una especificidad del 95%. Tu tarea inicial es entender estos conceptos y cómo se relacionan con el resultado positivo de un paciente.",
-          "speaker": "Doctor"
+          "text": "Entras en la consulta y encuentras a una paciente con un resultado positivo en la mano. Te dice: «Entonces tengo cáncer, ¿verdad?». Antes de calcular nada, la supervisora quiere saber si sabes qué información aporta cada medida.",
+          "speaker": "Supervisora de cribado"
         },
         "competencies": [
           {
             "competency_id": "C01",
             "weight": 1
+          },
+          {
+            "competency_id": "C04",
+            "weight": 1
+          }
+        ],
+        "hints": [
+          {
+            "hint_id": "H1",
+            "text": "Fíjate en qué grupo se coloca en el denominador de cada proporción.",
+            "penalty": 0.02
           }
         ]
       },
       {
         "stage_id": "S02",
         "order": 2,
-        "type": "data_digitization",
-        "title": "Contexto del Programa de Cribado",
-        "objective": "Razonar cómo la prevalencia afecta a la interpretación de un resultado positivo.",
+        "type": "clinical_intro",
+        "title": "Qué puede decir un positivo",
+        "objective": "Relacionar cada medida con la población de referencia adecuada.",
         "question": {
           "question_id": "Q2",
-          "type": "numeric",
-          "text": "Si se han analizado {{pacientes_totales}} pacientes, ¿cuántos se espera que realmente tengan cáncer colorrectal?",
-          "required": true
+          "type": "multiple_choice",
+          "text": "¿Qué afirmaciones son correctas?",
+          "required": true,
+          "options": [
+            {
+              "id": "A",
+              "label": "Una sensibilidad del 90 % significa que 90 de cada 100 personas enfermas obtienen un resultado positivo."
+            },
+            {
+              "id": "B",
+              "label": "Una especificidad del 95 % significa que 95 de cada 100 personas con resultado positivo están enfermas."
+            },
+            {
+              "id": "C",
+              "label": "El valor predictivo positivo depende, entre otros factores, de cuánta enfermedad haya en la población examinada."
+            },
+            {
+              "id": "D",
+              "label": "Una especificidad del 95 % implica que el 5 % de las personas enfermas obtendrá un resultado positivo."
+            },
+            {
+              "id": "E",
+              "label": "Si aumenta la frecuencia de la enfermedad manteniendo iguales las características de la prueba, suele aumentar la proporción de positivos que corresponden a personas enfermas."
+            }
+          ]
         },
         "evaluation": {
           "type": "rule",
-          "maximum_score": 5
+          "maximum_score": 2
         },
         "next": {
           "default": "S03"
         },
         "narrative": {
-          "text": "Para proporcionar un contexto a los resultados obtenidos, necesitas saber cuántos pacientes se han sometido a la prueba y cuál es la prevalencia del cáncer colorrectal en la población analizada. Considera que realizaste un análisis anterior y encontraste que el cáncer colorrectal presenta en esta comunidad una prevalencia aproximada de {{prevalencia}}%.",
-          "speaker": "Doctor"
+          "text": "La paciente sigue preocupada. La supervisora coloca cuatro afirmaciones sobre la mesa y te pide que selecciones solo las que son correctas antes de seguir hablando con ella.",
+          "speaker": "Supervisora de cribado"
         },
         "competencies": [
+          {
+            "competency_id": "C01",
+            "weight": 1
+          },
           {
             "competency_id": "C02",
             "weight": 1
@@ -170,7 +203,7 @@
         "hints": [
           {
             "hint_id": "H2",
-            "text": "Recuerda que la prevalencia se refiere a la proporción de casos en la población total.",
+            "text": "Pregunta siempre quién está en el denominador: personas enfermas, no enfermas o personas con resultado positivo.",
             "penalty": 0.02
           }
         ]
@@ -178,36 +211,62 @@
       {
         "stage_id": "S03",
         "order": 3,
-        "type": "analysis",
-        "title": "Cálculo de Probabilidades Posprueba",
-        "objective": "Calcular la probabilidad de que un paciente sea portador de la enfermedad tras un resultado positivo.",
+        "type": "data_digitization",
+        "title": "Qué datos necesitas",
+        "objective": "Seleccionar las variables necesarias para construir una tabla de resultados del cribado.",
         "question": {
           "question_id": "Q3",
-          "type": "numeric",
-          "text": "¿Cuál es la probabilidad de que un paciente con resultado positivo esté realmente enfermo?",
-          "required": true
+          "type": "variable_selection",
+          "text": "Selecciona las variables imprescindibles para calcular cuántos positivos son verdaderos positivos y cuántos son falsos positivos.",
+          "required": true,
+          "options": [
+            {
+              "id": "V1",
+              "label": "Identificador de la persona"
+            },
+            {
+              "id": "V2",
+              "label": "Resultado de la prueba de cribado"
+            },
+            {
+              "id": "V3",
+              "label": "Diagnóstico confirmado mediante la prueba de referencia"
+            },
+            {
+              "id": "V4",
+              "label": "Fecha de nacimiento"
+            },
+            {
+              "id": "V5",
+              "label": "Teléfono de contacto"
+            }
+          ]
         },
         "evaluation": {
           "type": "rule",
-          "maximum_score": 5
+          "maximum_score": 1
         },
         "next": {
           "default": "S04"
         },
         "narrative": {
-          "text": "Con los datos anteriores, ahora necesitas calcular la probabilidad de que un paciente que ha obtenido un resultado positivo efectivamente tenga cáncer colorrectal. Utiliza la fórmula de probabilidad posprueba para hacerlo.",
-          "speaker": "Doctor"
+          "text": "Para comprobar la situación de tu cupo, la enfermera responsable te ofrece los registros del programa. Antes de abrirlos, te pide que decidas qué variables son imprescindibles para reconstruir quién estaba enfermo y qué resultado obtuvo.",
+          "speaker": "Enfermera responsable del programa"
         },
         "competencies": [
           {
-            "competency_id": "C04",
+            "competency_id": "C01",
+            "weight": 1
+          },
+          {
+            "competency_id": "C03",
             "weight": 1
           }
         ],
         "hints": [
           {
             "hint_id": "H3",
-            "text": "Usa la fórmula de probabilidad que relaciona la sensibilidad, especificidad, y prevalencia.",
+            "text": "Necesitas conocer tanto el resultado del cribado como la situación real de enfermedad para clasificar cada caso.",
             "penalty": 0.02
           }
         ]
@@ -215,40 +274,25 @@
       {
         "stage_id": "S04",
         "order": 4,
-        "type": "ai_audit",
-        "title": "Comunicación al Paciente",
-        "objective": "Comunicar efectivamente el riesgo al paciente.",
+        "type": "data_digitization",
+        "title": "Un registro imperfecto",
+        "objective": "Detectar errores de codificación y decidir cuándo corregir, conservar o excluir un registro.",
         "question": {
           "question_id": "Q4",
-          "type": "open_text",
-          "text": "¿Cómo comunicarías a un paciente que ha obtenido un resultado positivo sobre su riesgo real de tener cáncer?",
+          "type": "data_cleaning",
+          "text": "Revisa el archivo y especifica qué acción aplicarías a cada problema detectado.",
           "required": true
         },
         "evaluation": {
-          "type": "semantic",
-          "maximum_score": 5,
-          "criteria": [
-            {
-              "id": "C1",
-              "description": "El estudiante explica claramente el significado del resultado."
-            },
-            {
-              "id": "C2",
-              "description": "El estudiante aborda la incertidumbre en la interpretación."
-            },
-            {
-              "id": "C3",
-              "description": "El estudiante ofrece apoyo emocional al paciente."
-            }
-          ],
-          "rubric_id": "RUB01"
+          "type": "rule",
+          "maximum_score": 2
         },
         "next": {
           "default": "S05"
         },
         "narrative": {
-          "text": "Ahora que tienes la probabilidad calculada, es crucial que sepas cómo comunicar estos resultados a los pacientes de manera clara y comprensible, sin crearles más angustia. Piensa en cómo presentar esta información, asegurándote de ser honesto sobre la incertidumbre.",
-          "speaker": "Doctor"
+          "text": "El archivo llega con pocos casos, pero contiene errores de transcripción. La enfermera te advierte de que no debes borrar datos solo porque sean incómodos: primero tienes que distinguir un error corregible de un registro que no permite saber qué ocurrió.",
+          "speaker": "Enfermera responsable del programa"
         },
         "competencies": [
           {
@@ -259,38 +303,209 @@
         "hints": [
           {
             "hint_id": "H4",
-            "text": "Considera un enfoque equilibrado entre la claridad informativa y la empatía.",
+            "text": "Un error tipográfico puede corregirse si el significado es inequívoco. Un diagnóstico desconocido impide clasificar el caso.",
             "penalty": 0.02
+          }
+        ],
+        "expected_schema": {
+          "variables": [
+            {
+              "name": "paciente",
+              "type": "numeric"
+            },
+            {
+              "name": "resultado_prueba",
+              "type": "numeric"
+            },
+            {
+              "name": "diagnostico_confirmado",
+              "type": "numeric"
+            }
+          ]
+        },
+        "raw_data": [
+          {
+            "paciente": "P001",
+            "resultado_prueba": "POSITIVO",
+            "diagnostico_confirmado": "SI"
+          },
+          {
+            "paciente": "P002",
+            "resultado_prueba": "NEGATIVO",
+            "diagnostico_confirmado": "NO"
+          },
+          {
+            "paciente": "P003",
+            "resultado_prueba": "POSITVO",
+            "diagnostico_confirmado": "NO"
+          },
+          {
+            "paciente": "P004",
+            "resultado_prueba": "NEGATIVO",
+            "diagnostico_confirmado": "NO"
+          },
+          {
+            "paciente": "P004",
+            "resultado_prueba": "NEGATIVO",
+            "diagnostico_confirmado": "NO"
+          },
+          {
+            "paciente": "P005",
+            "resultado_prueba": "POSITIVO",
+            "diagnostico_confirmado": "DESCONOCIDO"
+          },
+          {
+            "paciente": "P006",
+            "resultado_prueba": "NEGATIVO",
+            "diagnostico_confirmado": "SI"
+          },
+          {
+            "paciente": "P007",
+            "resultado_prueba": "POSITIVO",
+            "diagnostico_confirmado": "NO"
           }
         ]
       },
       {
         "stage_id": "S05",
         "order": 5,
-        "type": "report",
-        "title": "Informe Final",
-        "objective": "Redactar un informe final con tus hallazgos y reflexiones.",
+        "type": "analysis",
+        "title": "El cálculo del cupo",
+        "objective": "Calcular la probabilidad de enfermedad después de un resultado positivo.",
         "question": {
           "question_id": "Q5",
+          "type": "numeric",
+          "text": "¿Qué porcentaje de las personas con resultado positivo estará realmente enfermo? Redondea a una cifra decimal.",
+          "required": true
+        },
+        "evaluation": {
+          "type": "rule",
+          "maximum_score": 2
+        },
+        "next": {
+          "default": "S06"
+        },
+        "narrative": {
+          "text": "Ahora trabajas con un cupo hipotético de 1.000 personas. La frecuencia real de cáncer colorrectal en este grupo es del 2 %. La prueba detecta correctamente al 90 % de las personas enfermas y da negativo correctamente en el 95 % de las personas no enfermas. La médica de familia espera una cifra que pueda revisar contigo.",
+          "speaker": "Médica de familia"
+        },
+        "competencies": [
+          {
+            "competency_id": "C02",
+            "weight": 1
+          },
+          {
+            "competency_id": "C03",
+            "weight": 1
+          }
+        ],
+        "hints": [
+          {
+            "hint_id": "H5",
+            "text": "En 1.000 personas, calcula primero cuántas están enfermas y cuántos falsos positivos aparecen entre las no enfermas.",
+            "penalty": 0.02
+          }
+        ]
+      },
+      {
+        "stage_id": "S06",
+        "order": 6,
+        "type": "ai_audit",
+        "title": "Cómo evitar una explicación engañosa",
+        "objective": "Elegir una estrategia de comunicación que incorpore la prevalencia y diferencie rendimiento de la prueba de riesgo individual.",
+        "question": {
+          "question_id": "Q6",
+          "type": "method_selection",
+          "text": "¿Qué alternativa ofrece la explicación más rigurosa para una persona con resultado positivo?",
+          "required": true,
+          "options": [
+            {
+              "id": "M1",
+              "label": "Decir que su probabilidad es del 90 %, porque la sensibilidad indica cuántos resultados positivos son verdaderos."
+            },
+            {
+              "id": "M2",
+              "label": "Explicar con frecuencias naturales que, entre 1.000 personas similares, habría 67 positivos y aproximadamente 18 corresponderían a personas enfermas; por tanto, el riesgo sería cercano al 27 %."
+            },
+            {
+              "id": "M3",
+              "label": "Decir que su probabilidad es del 5 %, porque ese es el porcentaje de resultados falsamente positivos."
+            },
+            {
+              "id": "M4",
+              "label": "No dar ninguna cifra, porque cualquier resultado positivo confirma la enfermedad solo después de una prueba adicional."
+            }
+          ],
+          "requires_justification": true
+        },
+        "evaluation": {
+          "type": "rule",
+          "maximum_score": 2
+        },
+        "next": {
+          "default": "S07"
+        },
+        "narrative": {
+          "text": "Un sistema de apoyo a la decisión propone este mensaje: «La prueba acierta el 90 % de las veces, así que una persona con resultado positivo tiene un 90 % de probabilidad de estar enferma». La médica te pide que audites la propuesta y elijas una forma más segura de presentar los datos.",
+          "speaker": "Médica de familia"
+        },
+        "ai_simulation": {
+          "provider": "Gemini",
+          "response": "La sensibilidad es del 90 %, por lo que el resultado positivo tiene una fiabilidad del 90 %. Recomiendo comunicar que la persona probablemente tiene la enfermedad."
+        },
+        "competencies": [
+          {
+            "competency_id": "C02",
+            "weight": 1
+          },
+          {
+            "competency_id": "C03",
+            "weight": 1
+          },
+          {
+            "competency_id": "C04",
+            "weight": 1
+          }
+        ],
+        "hints": [
+          {
+            "hint_id": "H6",
+            "text": "La sensibilidad parte de quienes están enfermos; la pregunta del paciente parte de quienes han dado positivo.",
+            "penalty": 0.02
+          }
+        ]
+      },
+      {
+        "stage_id": "S07",
+        "order": 7,
+        "type": "report",
+        "title": "La explicación a la paciente",
+        "objective": "Integrar el cálculo, la interpretación y la comunicación clínica de un resultado positivo.",
+        "question": {
+          "question_id": "Q7",
           "type": "final_report",
-          "text": "Escribe un informe resumido de todo lo aprendido en este proceso, enfocándote en los aspectos más importantes a recordar y cómo mejorarías la comunicación con los pacientes en el futuro.",
+          "text": "Redacta un informe breve dirigido a la paciente. Incluye qué significan la sensibilidad y la especificidad de esta prueba, qué probabilidad aproximada tiene de estar enferma tras un resultado positivo en este cupo y por qué será necesaria una prueba confirmatoria.",
           "required": true
         },
         "evaluation": {
           "type": "semantic",
-          "maximum_score": 5,
+          "maximum_score": 4,
           "criteria": [
             {
-              "id": "C1",
-              "description": "El informe resume adecuadamente los pasos tomados."
+              "id": "CR05",
+              "description": "Indica correctamente que la sensibilidad del 90 % se refiere a detectar a personas que realmente están enfermas y que la especificidad del 95 % se refiere a identificar como negativas a personas no enfermas."
             },
             {
-              "id": "C2",
-              "description": "El estudiante reflexiona sobre la comunicación al paciente."
+              "id": "CR06",
+              "description": "Comunica una probabilidad posprueba cercana al 26,9 %, aproximadamente 27 %, para un resultado positivo en este cupo."
             },
             {
-              "id": "C3",
-              "description": "Se sugieren mejoras para el futuro en el manejo de resultados."
+              "id": "CR07",
+              "description": "Explica que la prevalencia baja hace que haya falsos positivos entre las personas no enfermas y modifica el valor predictivo positivo."
+            },
+            {
+              "id": "CR08",
+              "description": "Aclara que el resultado positivo no confirma por sí solo el cáncer y justifica la realización de una prueba confirmatoria."
             }
           ],
           "rubric_id": "RUB01"
@@ -299,8 +514,8 @@
           "default": null
         },
         "narrative": {
-          "text": "Has completado el análisis y la comunicación de los resultados a los pacientes del programa de cribado. Reflexiona sobre todo el proceso y cómo lo manejaste.",
-          "speaker": "Doctor"
+          "text": "Vuelves a la consulta con la paciente. Ya has comprobado los registros y calculado el resultado del cupo. Ahora debes redactar el mensaje que quedará en la historia clínica y que servirá para preparar la conversación sobre la prueba confirmatoria.",
+          "speaker": "Supervisora de cribado"
         },
         "competencies": [
           {
@@ -319,50 +534,12 @@
             "competency_id": "C04",
             "weight": 1
           }
-        ]
-      },
-      {
-        "stage_id": "S06",
-        "order": 6,
-        "type": "report",
-        "title": "Refuerzo Opcional",
-        "objective": "Clarificar conceptos confusos y asegurar el entendimiento de los alumnos.",
-        "question": {
-          "question_id": "Q6",
-          "type": "open_text",
-          "text": "¿Qué conceptos te resultan confusos o difíciles de entender sobre la prueba de cribado?",
-          "required": true
-        },
-        "evaluation": {
-          "type": "semantic",
-          "maximum_score": 5,
-          "criteria": [
-            {
-              "id": "C1",
-              "description": "El estudiante expresa sus confusiones claramente."
-            },
-            {
-              "id": "C2",
-              "description": "Se ofrecen ejemplos relevantes para aclarar conceptos."
-            }
-          ],
-          "rubric_id": "RUB01"
-        },
-        "next": {
-          "default": null
-        },
-        "narrative": {
-          "text": "Se ha observado que algunos alumnos presentan dificultades entendiendo cómo se relacionan las diferentes métricas de la prueba diagnóstica. Abre un diálogo para clarificar estos temas.",
-          "speaker": "Monitor"
-        },
-        "competencies": [
+        ],
+        "hints": [
           {
-            "competency_id": "C01",
-            "weight": 1
-          },
-          {
-            "competency_id": "C02",
-            "weight": 1
+            "hint_id": "H7",
+            "text": "Da una cifra comprensible, explica de dónde sale y evita expresiones como «seguro» o «tiene cáncer» antes de confirmar el diagnóstico.",
+            "penalty": 0.02
           }
         ]
       }
@@ -373,22 +550,69 @@
     "stages": [
       {
         "stage_id": "S01",
-        "correct": [
-          "La sensibilidad es la capacidad de detectar correctamente la enfermedad en pacientes enfermos.",
-          "La especificidad es la capacidad de identificar correctamente a los sanos."
-        ]
+        "model_answer": "La sensibilidad indica qué proporción de las personas que realmente tienen la enfermedad da positivo. La especificidad indica qué proporción de las personas que no la tienen da negativo. El valor predictivo positivo indica qué proporción de quienes dan positivo están realmente enfermas. Por tanto, un resultado positivo no equivale por sí solo a un diagnóstico."
       },
       {
         "stage_id": "S02",
         "correct": [
-          "Se espera que {{pacientes_totales}} * ({{prevalencia}} / 100) tengan cáncer colorrectal."
-        ]
+          "A",
+          "C",
+          "E"
+        ],
+        "model_answer": "Son correctas A, C y E. La especificidad parte de las personas no enfermas, y la sensibilidad parte de las personas enfermas."
       },
       {
         "stage_id": "S03",
         "correct": [
-          "Se calcula aplicando la fórmula: P(enfermo | positivo) = (Sensibilidad * Prevalencia) / ((Sensibilidad * Prevalencia) + ((1 - Especificidad) * (1 - Prevalencia)))."
+          "V1",
+          "V2",
+          "V3"
+        ],
+        "model_answer": "Son imprescindibles el identificador, el resultado de la prueba y el diagnóstico confirmado. La fecha de nacimiento y el teléfono no permiten clasificar los resultados."
+      },
+      {
+        "stage_id": "S04",
+        "model_answer": "Corregir POSITVO a POSITIVO en la fila 4. Eliminar la fila duplicada de P004, que aparece por segunda vez. Eliminar la fila de P005 porque el diagnóstico confirmado es desconocido. Mantener P006 aunque sea un resultado discordante: es un caso válido y no debe eliminarse por no coincidir con lo esperado.",
+        "data_quality_events": [
+          {
+            "id": "DP01",
+            "row": 4,
+            "variable": "resultado_prueba",
+            "expected_interpretation": "POSITIVO",
+            "expected_action": null
+          },
+          {
+            "id": "DP02",
+            "row": 6,
+            "variable": "paciente",
+            "expected_interpretation": null,
+            "expected_action": "remove"
+          },
+          {
+            "id": "DP03",
+            "row": 7,
+            "variable": "diagnostico_confirmado",
+            "expected_interpretation": null,
+            "expected_action": "remove"
+          }
         ]
+      },
+      {
+        "stage_id": "S05",
+        "expected": 26.9,
+        "tolerance": 0,
+        "model_answer": "Hay 20 personas enfermas: 18 dan positivo. Hay 980 personas no enfermas y el 5 % obtiene un falso positivo: 49 personas. Por tanto, hay 67 positivos en total y 18 son verdaderos positivos. La probabilidad posprueba es 18/67 = 26,9 %."
+      },
+      {
+        "stage_id": "S06",
+        "correct": [
+          "M2"
+        ],
+        "model_answer": "La opción M2 es la adecuada. Usa la prevalencia del cupo, muestra los recuentos y comunica que el resultado positivo aumenta la probabilidad de enfermedad, pero no la convierte en certeza."
+      },
+      {
+        "stage_id": "S07",
+        "model_answer": "La prueba detecta aproximadamente al 90 % de las personas que tienen la enfermedad y da negativo correctamente en el 95 % de quienes no la tienen. En este cupo, donde la enfermedad afecta aproximadamente al 2 %, de cada 1.000 personas habría unos 67 resultados positivos y alrededor de 18 corresponderían a personas enfermas. Por eso, si tu resultado es positivo, la probabilidad de que tengas la enfermedad es aproximadamente del 27 %, no del 90 %. El resultado no confirma por sí solo el diagnóstico; necesitamos una prueba confirmatoria para saberlo con seguridad."
       }
     ]
   }
