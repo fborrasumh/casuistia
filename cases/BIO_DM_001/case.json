@@ -1,7 +1,7 @@
 {
   "case_engine_version": "1.0.0",
   "case": {
-    "case_id": "BIO_DM_002",
+    "case_id": "BIO_DM_001",
     "version": "1.0",
     "status": "draft",
     "metadata": {
