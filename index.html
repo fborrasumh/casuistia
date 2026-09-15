@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CasuístIA · Casos clínicos con traza de proceso</title>
+<meta name="description" content="Motor de casos clínicos adaptativos con registro append-only del proceso del estudiante y evaluación asistida por IA. Un único fichero, sin servidor.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papel:#F1F4F3;
+  --tarjeta:#FFFFFF;
+  --tinta:#14211F;
+  --tinta-suave:#576663;
+  --verde:#0B6157;
+  --verde-tenue:#E2EEEB;
+  --ambar:#A0511B;
+  --ambar-tenue:#F6EBE0;
+  --azul:#2B5A87;
+  --linea:#D3DDDA;
+  --linea-fuerte:#A9B9B5;
+  --radio:10px;
+  --sombra:0 1px 0 rgba(20,33,31,.05), 0 10px 28px -22px rgba(20,33,31,.55);
+  --sans:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --serif:"Newsreader", Georgia, serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--papel);
+  color:var(--tinta);
+  font:400 16px/1.55 var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:500;letter-spacing:-.01em}
+p{margin:0 0 .8em}
+a{color:var(--verde)}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--verde);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+
+/* ---------- Estructura ---------- */
+.marco{max-width:1080px;margin:0 auto;padding:0 20px 80px}
+header.barra{
+  border-bottom:1px solid var(--linea);
+  background:var(--tarjeta);
+  position:sticky;top:0;z-index:30;
+}
+.barra .marco{display:flex;align-items:center;gap:16px;padding-top:12px;padding-bottom:12px}
+.marca{font:500 19px/1 var(--serif);letter-spacing:.01em}
+.marca span{color:var(--verde)}
+.migas{color:var(--tinta-suave);font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acciones{display:flex;gap:8px;flex-shrink:0}
+
+/* ---------- Controles ---------- */
+.btn{
+  background:var(--verde);color:#fff;border:1px solid var(--verde);
+  padding:9px 16px;border-radius:var(--radio);cursor:pointer;
+  font-weight:500;transition:background .15s ease;
+}
+.btn:hover{background:#094f47}
+.btn.sec{background:transparent;color:var(--tinta);border-color:var(--linea-fuerte)}
+.btn.sec:hover{background:var(--verde-tenue);border-color:var(--verde)}
+.btn.min{padding:6px 11px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+input[type=text],input[type=password],input[type=number],select,textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--linea-fuerte);
+  border-radius:var(--radio);background:#fff;color:var(--tinta);font:inherit;
+}
+textarea{min-height:150px;resize:vertical;line-height:1.6}
+label.campo{display:block;margin-bottom:14px;font-size:14px;color:var(--tinta-suave)}
+label.campo > span{display:block;margin-bottom:5px;color:var(--tinta)}
+.ayuda{font-size:13px;color:var(--tinta-suave);margin-top:5px}
+
+/* ---------- Tarjetas ---------- */
+.tarjeta{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--radio);padding:22px;box-shadow:var(--sombra);margin-bottom:18px}
+.tarjeta h2{font-size:20px;margin-bottom:10px}
+.rejilla{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+
+/* ---------- Portada ---------- */
+.portada{padding:56px 0 34px;border-bottom:1px solid var(--linea);margin-bottom:28px}
+.portada h1{font:400 clamp(30px,5.2vw,46px)/1.12 var(--serif);max-width:15ch;margin-bottom:14px}
+.portada .entradilla{font:400 19px/1.6 var(--serif);max-width:62ch;color:var(--tinta-suave)}
+.ficha{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:22px;font-size:13px;color:var(--tinta-suave)}
+.ficha b{display:block;color:var(--tinta);font-weight:500;font-size:15px;font-family:var(--mono)}
+
+/* ---------- Runner: raíl + escena ---------- */
+.runner{display:grid;grid-template-columns:212px 1fr;gap:34px;align-items:start}
+.rail{position:sticky;top:76px;border-left:2px solid var(--linea);padding-left:0}
+.rail ol{list-style:none;margin:0;padding:0}
+.rail li{position:relative;padding:9px 0 9px 20px;font-size:13px;color:var(--tinta-suave);line-height:1.35}
+.rail li::before{
+  content:attr(data-n);position:absolute;left:-13px;top:9px;
+  width:24px;height:24px;border-radius:50%;background:var(--papel);
+  border:2px solid var(--linea);color:var(--linea-fuerte);
+  font:500 11px/20px var(--mono);text-align:center;
+}
+.rail li.hecha::before{content:"✓";background:var(--verde);border-color:var(--verde);color:#fff}
+.rail li.actual{color:var(--tinta);font-weight:500}
+.rail li.actual::before{border-color:var(--verde);color:var(--verde);background:#fff}
+.reloj{margin-top:18px;padding-left:20px;font:400 12px/1.4 var(--mono);color:var(--tinta-suave)}
+
+.escena{min-width:0}
+.tipo-escena{font-size:13px;color:var(--verde);margin-bottom:6px}
+.escena h2{font:400 clamp(22px,3.4vw,30px)/1.25 var(--serif);margin-bottom:16px;max-width:24ch}
+.relato{
+  background:var(--tarjeta);border:1px solid var(--linea);border-left:3px solid var(--verde);
+  border-radius:var(--radio);padding:20px 22px;margin-bottom:20px;
+}
+.relato p{font:400 18px/1.65 var(--serif);max-width:66ch}
+.relato .voz{font-size:13px;color:var(--tinta-suave);font-family:var(--sans);margin:10px 0 0}
+.objetivo{font-size:14px;color:var(--tinta-suave);margin-bottom:20px;max-width:70ch}
+.pregunta{font-size:17px;margin-bottom:14px;max-width:70ch}
+
+/* ---------- Opciones ---------- */
+.opciones{display:grid;gap:9px;margin-bottom:16px}
+.opcion{
+  display:flex;gap:11px;align-items:flex-start;padding:13px 15px;
+  border:1px solid var(--linea-fuerte);border-radius:var(--radio);
+  background:#fff;cursor:pointer;transition:border-color .15s ease, background .15s ease;
+}
+.opcion:hover{border-color:var(--verde)}
+.opcion.marcada{border-color:var(--verde);background:var(--verde-tenue)}
+.opcion input{margin-top:3px;accent-color:var(--verde);flex-shrink:0}
+.opcion span{max-width:64ch}
+
+/* ---------- Tabla de datos ---------- */
+.tabla-datos{width:100%;border-collapse:collapse;font:400 14px/1.4 var(--mono);margin-bottom:14px}
+.tabla-datos th{
+  text-align:left;font:500 12px/1.3 var(--sans);color:var(--tinta-suave);
+  padding:8px 10px;border-bottom:2px solid var(--linea-fuerte);
+}
+.tabla-datos td{padding:4px 6px;border-bottom:1px solid var(--linea)}
+.tabla-datos input{padding:6px 8px;font:inherit;border-color:var(--linea)}
+.tabla-datos input.tocado{border-color:var(--ambar);background:var(--ambar-tenue)}
+.tabla-datos td.fila{font-size:12px;color:var(--tinta-suave);width:34px;text-align:right}
+.envoltura-tabla{overflow-x:auto;margin-bottom:14px}
+
+/* ---------- Bloques especiales ---------- */
+.bloque-ia{background:var(--ambar-tenue);border:1px dashed var(--ambar);border-radius:var(--radio);padding:16px 18px;margin-bottom:18px}
+.bloque-ia .fuente{font:500 12px/1 var(--sans);color:var(--ambar);margin-bottom:8px}
+.bloque-ia p{margin:0;max-width:66ch}
+pre.codigo{
+  background:#101E1C;color:#DCE8E5;border-radius:var(--radio);padding:16px 18px;
+  overflow-x:auto;font:400 13.5px/1.65 var(--mono);margin:0 0 18px;
+}
+.pista{background:var(--verde-tenue);border-radius:var(--radio);padding:12px 15px;font-size:14px;margin-bottom:14px}
+.aviso{background:var(--ambar-tenue);border:1px solid var(--ambar);color:#6E3810;border-radius:var(--radio);padding:12px 15px;font-size:14px;margin-bottom:16px}
+.pie-escena{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--linea);padding-top:18px;margin-top:6px}
+.pie-escena .hueco{flex:1}
+.contador{font:400 12px/1 var(--mono);color:var(--tinta-suave)}
+
+/* ---------- Informe ---------- */
+.medida{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid var(--linea)}
+.medida:last-child{border-bottom:0}
+.medida b{font:500 15px/1 var(--mono)}
+.barra-nivel{height:5px;background:var(--linea);border-radius:3px;overflow:hidden;width:120px;flex-shrink:0}
+.barra-nivel i{display:block;height:100%;background:var(--verde)}
+.etiqueta{display:inline-block;font-size:12px;padding:3px 9px;border-radius:99px;background:var(--verde-tenue);color:var(--verde);margin:0 6px 6px 0}
+.etiqueta.baja{background:var(--ambar-tenue);color:var(--ambar)}
+pre.json{background:#fff;border:1px solid var(--linea);border-radius:var(--radio);padding:14px;overflow:auto;max-height:340px;font:400 12px/1.5 var(--mono)}
+
+.oculto{display:none !important}
+footer.creditos{border-top:1px solid var(--linea);margin-top:40px;padding:20px 0;font-size:13px;color:var(--tinta-suave)}
+
+@media (max-width:820px){
+  .runner{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;border-left:0;border-bottom:1px solid var(--linea);padding-bottom:10px}
+  .rail ol{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px 14px}
+  .rail li{padding:0 8px 0 14px;white-space:nowrap}
+  .rail li::before{position:static;display:inline-block;margin-right:6px;vertical-align:middle}
+  .reloj{padding-left:0}
+}
+</style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="marco">
+    <div class="marca">Casuíst<span>IA</span></div>
+    <div class="migas" id="migas">Motor de casos clínicos con traza de proceso</div>
+    <div class="acciones">
+      <button class="btn sec min" id="btn-ajustes">Ajustes</button>
+      <button class="btn sec min oculto" id="btn-guardar">Guardar traza</button>
+    </div>
+  </div>
+</header>
+
+<main class="marco">
+
+<!-- ====================== INICIO ====================== -->
+<section id="v-inicio">
+  <div class="portada">
+    <h1 id="p-titulo">El paciente que no queremos perder</h1>
+    <p class="entradilla" id="p-subtitulo">Una investigación clínica en Atención Primaria. No se evalúa solo el resultado: se registra cómo llegas hasta él.</p>
+    <div class="ficha" id="p-ficha"></div>
+  </div>
+
+  <div class="rejilla">
+    <div class="tarjeta">
+      <h2>Empezar el caso</h2>
+      <label class="campo"><span>Identificador del estudiante</span>
+        <input type="text" id="in-estudiante" placeholder="MED-20260045" autocomplete="off">
+      </label>
+      <label class="campo"><span>Modo</span>
+        <select id="in-modo">
+          <option value="docencia">Docencia — con retroalimentación inmediata</option>
+          <option value="examen">Examen — sin retroalimentación, solo traza</option>
+        </select>
+      </label>
+      <button class="btn" id="btn-empezar">Empezar</button>
+      <p class="ayuda" id="aviso-intento"></p>
+    </div>
+
+    <div class="tarjeta">
+      <h2>Cargar otro caso</h2>
+      <p class="ayuda">Un caso es un fichero <code>CASE_ENGINE</code> en JSON. En modo examen, publica el caso sin la clave de respuestas y corrige después.</p>
+      <p style="margin:12px 0"><input type="file" id="in-caso" accept=".json"></p>
+      <button class="btn sec min" id="btn-caso-demo">Volver al caso de demostración</button>
+    </div>
+
+    <div class="tarjeta">
+      <h2>Corregir trazas</h2>
+      <p class="ayuda">Para el profesor: carga las trazas de los estudiantes y, si el caso se publicó sin ella, la clave de respuestas.</p>
+      <p style="margin:12px 0"><input type="file" id="in-trazas" accept=".json" multiple></p>
+      <p style="margin:12px 0"><input type="file" id="in-clave" accept=".json"></p>
+      <button class="btn sec min" id="btn-corregir">Corregir lote</button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== AJUSTES ====================== -->
+<section id="v-ajustes" class="oculto">
+  <div class="tarjeta" style="max-width:620px">
+    <h2>Conexión con OpenAI</h2>
+    <p class="ayuda" style="margin-bottom:18px">La clave se guarda solo en este navegador y viaja únicamente a <code>api.openai.com</code>. Para un examen real, sustituye la llamada directa por un proxy con la clave en el servidor.</p>
+    <label class="campo"><span>Clave de API</span>
+      <input type="password" id="in-clave-api" placeholder="sk-..." autocomplete="off">
+    </label>
+    <label class="campo"><span>Modelo</span>
+      <select id="in-modelo"></select>
+      <span class="ayuda">Luna para corregir muchas respuestas cerradas, Terra para el trabajo habitual, Sol para la evaluación semántica fina y el análisis del proceso.</span>
+    </label>
+    <label class="campo"><span>Esfuerzo de razonamiento</span>
+      <select id="in-esfuerzo">
+        <option value="low">Bajo</option>
+        <option value="medium" selected>Medio</option>
+        <option value="high">Alto</option>
+      </select>
+    </label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btn-guardar-ajustes">Guardar ajustes</button>
+      <button class="btn sec" id="btn-probar">Probar conexión</button>
+      <button class="btn sec" id="btn-listar">Actualizar lista de modelos</button>
+    </div>
+    <p class="ayuda" id="estado-conexion"></p>
+  </div>
+</section>
+
+<!-- ====================== RUNNER ====================== -->
+<section id="v-runner" class="oculto">
+  <div class="runner">
+    <nav class="rail" aria-label="Fases del caso">
+      <ol id="rail-lista"></ol>
+      <div class="reloj" id="reloj">00:00</div>
+    </nav>
+    <div class="escena">
+      <div class="tipo-escena" id="e-tipo"></div>
+      <h2 id="e-titulo"></h2>
+      <div id="e-relato"></div>
+      <p class="objetivo" id="e-objetivo"></p>
+      <div id="e-cuerpo"></div>
+      <div id="e-pistas"></div>
+      <div id="e-respuesta"></div>
+      <div id="e-feedback"></div>
+      <div class="pie-escena">
+        <button class="btn" id="btn-continuar">Enviar y continuar</button>
+        <button class="btn sec min" id="btn-pista">Pedir una pista</button>
+        <span class="hueco"></span>
+        <span class="contador" id="e-contador"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== INFORME ====================== -->
+<section id="v-informe" class="oculto">
+  <div class="portada" style="padding-top:36px">
+    <h1>Cómo has razonado</h1>
+    <p class="entradilla" id="i-resumen"></p>
+  </div>
+  <div class="rejilla">
+    <div class="tarjeta">
+      <h2>Competencias</h2>
+      <div id="i-competencias"></div>
+    </div>
+    <div class="tarjeta">
+      <h2>Proceso</h2>
+      <div id="i-proceso"></div>
+    </div>
+  </div>
+  <div class="tarjeta">
+    <h2>Traza del intento</h2>
+    <p class="ayuda">Este fichero es el registro completo y ordenado de lo que ha ocurrido. Entrégalo si el caso se ha hecho en modo examen.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0">
+      <button class="btn" id="btn-descargar-traza">Descargar traza (JSON)</button>
+      <button class="btn sec" id="btn-evaluar">Evaluar con IA</button>
+      <button class="btn sec" id="btn-reiniciar">Empezar otro intento</button>
+    </div>
+    <pre class="json" id="i-json"></pre>
+  </div>
+</section>
+
+<footer class="creditos">
+  CasuístIA · esqueleto de referencia. Fernando Borrás Rocher, Universidad Miguel Hernández de Elche.
+  Publicado como fichero único para GitHub Pages.
+</footer>
+</main>
+
+<script>
+/* =====================================================================
+   CasuístIA — esqueleto en un único fichero
+   Tres piezas separadas a propósito:
+     CASE_ENGINE   qué existe y qué puede ocurrir   (inmutable en un intento)
+     TRACE         qué hizo esta persona            (append-only)
+     ASSESSMENT    cómo lo hizo                     (lee lo anterior, no lo toca)
+   ===================================================================== */
+(function () {
+'use strict';
+
+/* ---------------------------------------------------------------------
+   0. Utilidades
+   ------------------------------------------------------------------ */
+const $ = (s, r) => (r || document).querySelector(s);
+const el = (t, attrs, txt) => {
+  const n = document.createElement(t);
+  if (attrs) for (const k in attrs) {
+    if (k === 'class') n.className = attrs[k]; else n.setAttribute(k, attrs[k]);
+  }
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+const ahora = () => new Date().toISOString();
+const uid = (p) => p + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+const clon = (o) => JSON.parse(JSON.stringify(o));
+
+// Almacén tolerante: localStorage si existe, memoria si no (previsualizaciones).
+const Store = (function () {
+  let ok = true;
+  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); }
+  catch (e) { ok = false; }
+  const mem = {};
+  return {
+    get: (k) => { try { return ok ? localStorage.getItem(k) : (mem[k] ?? null); } catch (e) { return null; } },
+    set: (k, v) => { try { ok ? localStorage.setItem(k, v) : (mem[k] = v); } catch (e) {} },
+    del: (k) => { try { ok ? localStorage.removeItem(k) : delete mem[k]; } catch (e) {} }
+  };
+})();
+
+// Generador reproducible: el mismo estudiante recibe siempre los mismos valores.
+function semilla(txt) {
+  let h = 2166136261;
+  for (let i = 0; i < txt.length; i++) { h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function rng(s) {
+  let a = s;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------------------------------------------------------------------
+   1. Capa de modelo (OpenAI)
+   ------------------------------------------------------------------ */
+const LLM = {
+  CLAVE: 'ia_openai_key',
+  MODELO: 'ia_openai_model',
+  ESFUERZO: 'ia_openai_effort',
+  catalogo: [
+    { id: 'gpt-5.6-luna',  nombre: 'GPT-5.6 Luna — rápido y barato' },
+    { id: 'gpt-5.6-terra', nombre: 'GPT-5.6 Terra — equilibrado' },
+    { id: 'gpt-5.6-sol',   nombre: 'GPT-5.6 Sol — máxima capacidad' },
+    { id: 'gpt-4o-mini',   nombre: 'GPT-4o mini — heredado' }
+  ],
+  clave() { return Store.get(this.CLAVE) || ''; },
+  modelo() { return Store.get(this.MODELO) || 'gpt-5.6-terra'; },
+  esfuerzo() { return Store.get(this.ESFUERZO) || 'medium'; },
+  razona(m) { return /^gpt-5/.test(m); },
+
+  async modelosDisponibles() {
+    const r = await fetch('https://api.openai.com/v1/models', {
+      headers: { Authorization: 'Bearer ' + this.clave() }
+    });
+    if (!r.ok) throw new Error('No se ha podido leer la lista de modelos (' + r.status + ')');
+    const d = await r.json();
+    return (d.data || []).map(m => m.id).filter(id => /^(gpt|o\d)/.test(id)).sort();
+  },
+
+  /* Una sola puerta de entrada al modelo. Si mañana cambia el endpoint,
+     se cambia aquí y no en veinte sitios. */
+  async pedir({ sistema, usuario, esquema, modelo, maxTokens }) {
+    const key = this.clave();
+    if (!key) throw new Error('Falta la clave de API. Ábrela en Ajustes.');
+    const m = modelo || this.modelo();
+    const cuerpo = {
+      model: m,
+      input: [
+        { role: 'system', content: [{ type: 'input_text', text: sistema }] },
+        { role: 'user',   content: [{ type: 'input_text', text: usuario }] }
+      ],
+      max_output_tokens: maxTokens || 2000
+    };
+    if (this.razona(m)) cuerpo.reasoning = { effort: this.esfuerzo() };
+    if (esquema) {
+      cuerpo.text = { format: { type: 'json_schema', name: 'salida', strict: true, schema: esquema } };
+    }
+    const r = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify(cuerpo)
+    });
+    if (!r.ok) {
+      let det = '';
+      try { det = (await r.json()).error?.message || ''; } catch (e) {}
+      throw new Error('OpenAI ha devuelto ' + r.status + '. ' + det);
+    }
+    const d = await r.json();
+    let texto = d.output_text;
+    if (!texto && Array.isArray(d.output)) {
+      texto = d.output.flatMap(o => (o.content || []))
+                      .filter(c => c.type === 'output_text')
+                      .map(c => c.text).join('\n');
+    }
+    texto = (texto || '').trim();
+    if (!esquema) return texto;
+    try { return JSON.parse(texto.replace(/^```json|```$/g, '').trim()); }
+    catch (e) { throw new Error('La respuesta del modelo no era el JSON esperado.'); }
+  }
+};
+
+/* ---------------------------------------------------------------------
+   2. CASE ENGINE — máquina de estados clínica
+   ------------------------------------------------------------------ */
+const CaseEngine = {
+  caso: null,
+  clave: null,      // respuestas y criterios; puede ir aparte en modo examen
+  vars: {},         // valores sorteados para este intento
+
+  cargar(json, semillaTxt) {
+    const raiz = json.case ? json : { case: json };
+    this.caso = raiz.case;
+    this.clave = raiz.answer_key || null;
+    this.vars = this.sortear(semillaTxt);
+    return this.caso;
+  },
+  cargarClave(json) { this.clave = json.answer_key || json; },
+
+  /* randomize_values: cada intento recibe su propia versión del caso. */
+  sortear(semillaTxt) {
+    const cfg = this.caso.configuration || {};
+    const v = {};
+    const defs = this.caso.variables || {};
+    const r = rng(semilla(String(semillaTxt || 'fija') + this.caso.case_id));
+    for (const k in defs) {
+      const d = defs[k];
+      if (!cfg.randomize_values) { v[k] = d.default; continue; }
+      if (d.type === 'integer_range') v[k] = Math.round(d.min + r() * (d.max - d.min));
+      else if (d.type === 'choice')   v[k] = d.values[Math.floor(r() * d.values.length)];
+      else v[k] = d.default;
+    }
+    return v;
+  },
+
+  /* Interpolación {{glucosa_umbral}} en cualquier texto del caso. */
+  txt(s) {
+    if (typeof s !== 'string') return s;
+    return s.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in this.vars ? this.vars[k] : m));
+  },
+
+  fase(id) { return (this.caso.stages || []).find(s => s.stage_id === id); },
+  primera() { return (this.caso.stages || [])[0]; },
+  lineaPrincipal() { return (this.caso.stages || []).filter(s => !s.remedial); },
+
+  /* Bifurcación: reglas evaluadas en orden, la primera que se cumple gana. */
+  siguiente(fase, ctx) {
+    const n = fase.next || {};
+    if (Array.isArray(n.rules)) {
+      for (const regla of n.rules) {
+        const c = regla.if || {};
+        const p = ctx.score;
+        if (c.score_gte != null && !(p >= c.score_gte)) continue;
+        if (c.score_lt != null && !(p < c.score_lt)) continue;
+        if (c.score_between && !(p >= c.score_between[0] && p <= c.score_between[1])) continue;
+        if (c.answer_equals != null && String(ctx.answer) !== String(c.answer_equals)) continue;
+        return regla.go_to;
+      }
+    }
+    return n.default || null;
+  },
+
+  /* Solución de una fase: nunca se entrega al estudiante en modo examen. */
+  solucion(stageId) {
+    if (!this.clave) return null;
+    return (this.clave.stages || []).find(s => s.stage_id === stageId) || null;
+  }
+};
+
+/* ---------------------------------------------------------------------
+   3. TRACE — registro append-only
+   ------------------------------------------------------------------ */
+const Trace = {
+  datos: null,
+  t0: 0,
+
+  iniciar(caso, estudiante, modo) {
+    this.t0 = Date.now();
+    this.datos = {
+      trace_version: '1.0.0',
+      attempt: {
+        attempt_id: uid('ATT'),
+        student_id: estudiante || 'anonimo',
+        case_id: caso.case_id,
+        case_version: caso.version,
+        mode: modo,
+        started_at: ahora(),
+        finished_at: null,
+        status: 'in_progress'
+      },
+      environment: {
+        device: matchMedia('(pointer:coarse)').matches ? 'touch' : 'desktop',
+        user_agent: navigator.userAgent,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language
+      },
+      case_variables: clon(CaseEngine.vars),
+      progress: { current_stage: null, completed_stages: [], progress_percentage: 0 },
+      scores: { academic_score: null, process_score: null, final_score: null },
+      stages: [], decisions: [], data_modifications: [],
+      ai_interactions: [], hints: [], events: [], evaluations: [],
+      process_analysis: null, final_report: null
+    };
+    this.evento('case_started', null);
+    this.guardar();
+  },
+
+  evento(tipo, stageId, extra) {
+    if (!this.datos) return;
+    this.datos.events.push(Object.assign({
+      event_id: 'EV' + String(this.datos.events.length + 1).padStart(4, '0'),
+      timestamp: ahora(), type: tipo, stage_id: stageId || null
+    }, extra || {}));
+  },
+
+  abrirFase(id) {
+    this.datos.progress.current_stage = id;
+    this.datos.stages.push({
+      stage_id: id, opened_at: ahora(), completed_at: null, status: 'in_progress',
+      interaction: { first_action_at: null, number_of_edits: 0, time_seconds: 0 },
+      answer: null, answer_history: [], score: null, requires_manual_review: false
+    });
+    this.evento('stage_opened', id);
+    this.guardar();
+  },
+
+  faseActual() { return this.datos.stages[this.datos.stages.length - 1]; },
+
+  /* El historial no se sobrescribe: cada versión intermedia queda. */
+  editar(id, valor) {
+    const f = this.faseActual(); if (!f || f.stage_id !== id) return;
+    const i = f.interaction;
+    if (!i.first_action_at) { i.first_action_at = ahora(); this.evento('answer_started', id); }
+    i.number_of_edits++;
+    const ult = f.answer_history[f.answer_history.length - 1];
+    const v = JSON.stringify(valor);
+    if (!ult || JSON.stringify(ult.value) !== v) {
+      f.answer_history.push({ timestamp: ahora(), value: clon(valor) });
+      this.evento('answer_modified', id);
+    }
+  },
+
+  cerrarFase(id, respuesta, tipo) {
+    const f = this.faseActual(); if (!f) return;
+    f.answer = { type: tipo, final: clon(respuesta) };
+    f.completed_at = ahora();
+    f.status = 'completed';
+    f.interaction.time_seconds = Math.round((new Date(f.completed_at) - new Date(f.opened_at)) / 1000);
+    this.datos.progress.completed_stages.push(id);
+    const total = CaseEngine.lineaPrincipal().length || 1;
+    this.datos.progress.progress_percentage =
+      Math.round(100 * this.datos.progress.completed_stages.length / total);
+    this.evento('answer_submitted', id);
+    this.evento('stage_completed', id);
+    this.guardar();
+  },
+
+  decision(stageId, tipo, decision, razonamiento, confianza) {
+    this.datos.decisions.push({
+      decision_id: uid('DEC'), stage_id: stageId, timestamp: ahora(),
+      decision_type: tipo, decision, reasoning: razonamiento || null,
+      confidence: confianza != null ? confianza : null, source: 'student'
+    });
+  },
+
+  modificacion(stageId, variable, fila, antes, despues, justificacion) {
+    this.datos.data_modifications.push({
+      modification_id: uid('DM'), stage_id: stageId, timestamp: ahora(),
+      variable, row: fila, before: antes, after: despues,
+      action: 'transform', student_justification: justificacion || null, accepted: null
+    });
+    this.evento('data_modified', stageId, { variable, row: fila });
+  },
+
+  ia(stageId, reg) {
+    this.datos.ai_interactions.push(Object.assign({
+      interaction_id: uid('AI'), stage_id: stageId, timestamp: ahora()
+    }, reg));
+    this.evento('ai_used', stageId);
+  },
+
+  pista(stageId, h) {
+    this.datos.hints.push({
+      hint_id: h.hint_id, stage_id: stageId, requested_at: ahora(),
+      hint_level: this.datos.hints.filter(x => x.stage_id === stageId).length + 1,
+      penalty: h.penalty || 0, hint_displayed: h.text
+    });
+    this.evento('hint_requested', stageId);
+    this.guardar();
+  },
+
+  terminar() {
+    this.datos.attempt.finished_at = ahora();
+    this.datos.attempt.status = 'submitted';
+    this.evento('case_finished', null);
+    this.guardar();
+  },
+
+  clave() { return 'casuistia_trace_' + this.datos.attempt.attempt_id; },
+  guardar() { if (this.datos) Store.set(this.clave(), JSON.stringify(this.datos)); },
+  descargar() {
+    const b = new Blob([JSON.stringify(this.datos, null, 2)], { type: 'application/json' });
+    const a = el('a'); a.href = URL.createObjectURL(b);
+    a.download = this.datos.attempt.attempt_id + '.json';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+};
+
+/* ---------------------------------------------------------------------
+   4. Tipos de pregunta — un registro, una entrada por tipo
+      pinta(fase, contenedor, alCambiar)  → dibuja el control
+      lee(contenedor)                     → devuelve la respuesta serializable
+      corrige(respuesta, solucion)        → {score, max} o null si necesita IA
+   ------------------------------------------------------------------ */
+const Tipos = {};
+
+function registrar(nombre, def) { Tipos[nombre] = def; }
+
+registrar('open_text', {
+  pinta(f, c, cb) {
+    const t = el('textarea', { id: 'resp', placeholder: 'Escribe tu respuesta' });
+    if (f.question.min_length) t.setAttribute('minlength', f.question.min_length);
+    t.addEventListener('input', () => cb(t.value));
+    c.appendChild(t);
+    const cont = el('p', { class: 'ayuda' }, '');
+    const pinta = () => cont.textContent = t.value.trim().split(/\s+/).filter(Boolean).length + ' palabras';
+    t.addEventListener('input', pinta); pinta(); c.appendChild(cont);
+  },
+  lee: (c) => $('#resp', c).value.trim(),
+  corrige: () => null            // siempre semántica
+});
+
+registrar('single_choice', {
+  pinta(f, c, cb) {
+    const caja = el('div', { class: 'opciones' });
+    (f.question.options || []).forEach(o => {
+      const l = el('label', { class: 'opcion' });
+      const i = el('input', { type: 'radio', name: 'op', value: o.id });
+      i.addEventListener('change', () => {
+        [...caja.children].forEach(x => x.classList.remove('marcada'));
+        l.classList.add('marcada'); cb(o.id);
+      });
+      l.append(i, el('span', null, CaseEngine.txt(o.label)));
+      caja.appendChild(l);
+    });
+    c.appendChild(caja);
+  },
+  lee: (c) => { const i = $('input[name=op]:checked', c); return i ? i.value : null; },
+  corrige: (r, sol) => sol && sol.correct ? { score: r === sol.correct[0] ? 1 : 0, max: 1 } : null
+});
+
+const multi = {
+  pinta(f, c, cb) {
+    const caja = el('div', { class: 'opciones' });
+    (f.question.options || []).forEach(o => {
+      const l = el('label', { class: 'opcion' });
+      const i = el('input', { type: 'checkbox', value: o.id });
+      i.addEventListener('change', () => {
+        l.classList.toggle('marcada', i.checked);
+        cb([...caja.querySelectorAll('input:checked')].map(x => x.value));
+      });
+      l.append(i, el('span', null, CaseEngine.txt(o.label)));
+      caja.appendChild(l);
+    });
+    c.appendChild(caja);
+  },
+  lee: (c) => [...c.querySelectorAll('input[type=checkbox]:checked')].map(x => x.value),
+  /* Parcial con penalización: aciertos menos falsos positivos, nunca negativo. */
+  corrige(r, sol) {
+    if (!sol || !sol.correct) return null;
+    const ok = sol.correct;
+    const bien = r.filter(x => ok.includes(x)).length;
+    const mal = r.filter(x => !ok.includes(x)).length;
+    return { score: Math.max(0, (bien - mal) / ok.length), max: 1 };
+  }
+};
+registrar('multiple_choice', multi);
+registrar('variable_selection', multi);
+
+registrar('numeric', {
+  pinta(f, c, cb) {
+    const i = el('input', { type: 'number', id: 'resp', step: f.question.step || 'any' });
+    i.addEventListener('input', () => cb(i.value));
+    c.appendChild(i);
+    if (f.question.unit) c.appendChild(el('p', { class: 'ayuda' }, 'Unidad: ' + f.question.unit));
+  },
+  lee: (c) => { const v = $('#resp', c).value; return v === '' ? null : Number(v); },
+  corrige(r, sol) {
+    if (!sol || sol.expected == null) return null;
+    const tol = sol.tolerance != null ? sol.tolerance : 0.001;
+    return { score: Math.abs(r - sol.expected) <= tol ? 1 : 0, max: 1 };
+  }
+});
+
+/* Elección del método: la justificación pesa más que la opción marcada. */
+registrar('method_selection', {
+  pinta(f, c, cb) {
+    Tipos.single_choice.pinta(f, c, () => cb(this.lee(c)));
+    if (f.question.requires_justification) {
+      c.appendChild(el('p', { class: 'pregunta' }, '¿Por qué ese planteamiento y no otro?'));
+      const t = el('textarea', { id: 'just', placeholder: 'Justifica el procedimiento elegido' });
+      t.addEventListener('input', () => cb(this.lee(c)));
+      c.appendChild(t);
+      const sl = el('input', { type: 'range', min: '0', max: '100', value: '70', id: 'conf' });
+      const et = el('p', { class: 'ayuda' }, 'Seguridad en tu elección: 70 %');
+      sl.addEventListener('input', () => { et.textContent = 'Seguridad en tu elección: ' + sl.value + ' %'; cb(this.lee(c)); });
+      c.append(sl, et);
+    }
+  },
+  lee: (c) => ({
+    answer: ($('input[name=op]:checked', c) || {}).value || null,
+    justification: ($('#just', c) || {}).value || '',
+    confidence: $('#conf', c) ? Number($('#conf', c).value) / 100 : null
+  }),
+  corrige: (r, sol) => sol && sol.correct ? { score: r.answer === sol.correct[0] ? 1 : 0, max: 1 } : null
+});
+
+/* Datos en papel: tabla editable que registra cada celda tocada. */
+registrar('data_cleaning', {
+  pinta(f, c, cb) {
+    const filas = f.raw_data || [];
+    const cols = (f.expected_schema && f.expected_schema.variables || []).map(v => v.name);
+    const env = el('div', { class: 'envoltura-tabla' });
+    const tb = el('table', { class: 'tabla-datos' });
+    const thead = el('thead'); const trh = el('tr');
+    trh.appendChild(el('th', null, '#'));
+    cols.forEach(n => trh.appendChild(el('th', null, n)));
+    thead.appendChild(trh); tb.appendChild(thead);
+    const cuerpo = el('tbody');
+    filas.forEach((fila, idx) => {
+      const tr = el('tr');
+      tr.appendChild(el('td', { class: 'fila' }, String(idx + 1)));
+      cols.forEach(col => {
+        const td = el('td');
+        const i = el('input', { type: 'text', 'data-col': col, 'data-fila': String(idx) });
+        i.value = fila[col] == null ? '' : String(fila[col]);
+        i.dataset.original = i.value;
+        i.addEventListener('change', () => {
+          const cambiado = i.value !== i.dataset.original;
+          i.classList.toggle('tocado', cambiado);
+          if (cambiado) {
+            const por = prompt('¿Por qué cambias este valor?') || '';
+            Trace.modificacion(f.stage_id, col, idx, i.dataset.original, i.value, por);
+            i.dataset.original = i.value;
+          }
+          cb(Tipos.data_cleaning.lee(c));
+        });
+        td.appendChild(i); tr.appendChild(td);
+      });
+      cuerpo.appendChild(tr);
+    });
+    tb.appendChild(cuerpo); env.appendChild(tb); c.appendChild(env);
+    c.appendChild(el('p', { class: 'ayuda' },
+      'Corrige lo que consideres incorrecto. Cada cambio queda registrado con tu justificación; dejar un valor intacto también es una decisión.'));
+  },
+  lee(c) {
+    const filas = {};
+    c.querySelectorAll('.tabla-datos input').forEach(i => {
+      const f = i.dataset.fila;
+      (filas[f] = filas[f] || {})[i.dataset.col] = i.value;
+    });
+    return Object.keys(filas).sort((a, b) => a - b).map(k => filas[k]);
+  },
+  /* Cuenta cuántos problemas sembrados se han detectado y arreglado. */
+  corrige(r, sol) {
+    if (!sol || !sol.data_quality_events) return null;
+    let bien = 0;
+    sol.data_quality_events.forEach(dq => {
+      const v = (r[dq.row] || {})[dq.variable];
+      if (dq.expected_interpretation != null && String(v) === String(dq.expected_interpretation)) bien++;
+      else if (dq.expected_action === 'remove' && (v === '' || v == null)) bien++;
+    });
+    return { score: bien / sol.data_quality_events.length, max: 1 };
+  }
+});
+
+/* Auditoría de una respuesta de IA deliberadamente defectuosa. */
+registrar('ai_audit', {
+  pinta(f, c, cb) {
+    const b = el('div', { class: 'bloque-ia' });
+    b.appendChild(el('div', { class: 'fuente' }, 'Respuesta generada por ' + (f.ai_simulation.provider || 'una IA')));
+    b.appendChild(el('p', null, CaseEngine.txt(f.ai_simulation.response)));
+    c.appendChild(b);
+    const d = el('div', { class: 'opciones' });
+    [['accept', 'La aceptaría tal cual'],
+     ['modify', 'La usaría corrigiendo lo que falla'],
+     ['reject', 'La descartaría']].forEach(([v, t]) => {
+      const l = el('label', { class: 'opcion' });
+      const i = el('input', { type: 'radio', name: 'op', value: v });
+      i.addEventListener('change', () => {
+        [...d.children].forEach(x => x.classList.remove('marcada'));
+        l.classList.add('marcada'); cb(Tipos.ai_audit.lee(c));
+      });
+      l.append(i, el('span', null, t)); d.appendChild(l);
+    });
+    c.appendChild(d);
+    const t = el('textarea', { id: 'resp', placeholder: '¿Qué comprobarías antes de utilizarla?' });
+    t.addEventListener('input', () => cb(Tipos.ai_audit.lee(c)));
+    c.appendChild(t);
+  },
+  lee: (c) => ({
+    stance: ($('input[name=op]:checked', c) || {}).value || null,
+    audit: $('#resp', c).value.trim()
+  }),
+  corrige: () => null
+});
+
+registrar('code_audit', {
+  pinta(f, c, cb) {
+    c.appendChild(el('pre', { class: 'codigo' }, CaseEngine.txt(f.code)));
+    const t = el('textarea', { id: 'resp', placeholder: 'Enumera qué comprobarías antes de aceptar el resultado' });
+    t.addEventListener('input', () => cb(t.value));
+    c.appendChild(t);
+  },
+  lee: (c) => $('#resp', c).value.trim(),
+  corrige: () => null
+});
+
+/* Informe final: el estudiante reconstruye su propio razonamiento. */
+registrar('final_report', {
+  pinta(f, c, cb) {
+    const campos = f.question.fields || [
+      { id: 'clinical_problem', label: 'El problema clínico' },
+      { id: 'statistical_problem', label: 'Su traducción estadística' },
+      { id: 'method', label: 'Método elegido y por qué' },
+      { id: 'results', label: 'Resultados' },
+      { id: 'clinical_interpretation', label: 'Qué significa para la consulta' },
+      { id: 'limitations', label: 'Limitaciones' },
+      { id: 'ai_use', label: 'Qué has usado de la IA y qué has corregido' }
+    ];
+    campos.forEach(ca => {
+      const l = el('label', { class: 'campo' });
+      l.appendChild(el('span', null, ca.label));
+      const t = el('textarea', { 'data-id': ca.id, style: 'min-height:96px' });
+      t.addEventListener('input', () => cb(Tipos.final_report.lee(c)));
+      l.appendChild(t); c.appendChild(l);
+    });
+  },
+  lee(c) {
+    const o = {};
+    c.querySelectorAll('textarea[data-id]').forEach(t => o[t.dataset.id] = t.value.trim());
+    return o;
+  },
+  corrige: () => null
+});
+
+/* Tipos aún por implementar: se anuncian en vez de fallar en silencio. */
+const PENDIENTES = ['percentage', 'classification', 'ranking', 'table_completion',
+                    'code_editor', 'code_execution', 'ai_prompt', 'interpretation', 'clinical_decision'];
+PENDIENTES.forEach(t => {
+  if (Tipos[t]) return;
+  registrar(t, {
+    pinta(f, c, cb) {
+      c.appendChild(el('div', { class: 'aviso' },
+        'El tipo de pregunta «' + t + '» todavía no tiene control propio. Respóndela por escrito.'));
+      Tipos.open_text.pinta(f, c, cb);
+    },
+    lee: (c) => $('#resp', c).value.trim(),
+    corrige: () => null
+  });
+});
+
+/* ---------------------------------------------------------------------
+   5. ASSESSMENT ENGINE — lee caso + traza, no los modifica
+   ------------------------------------------------------------------ */
+const Assessment = {
+  /* Corrección determinista de lo que se puede corregir sin modelo. */
+  automatica(fase, respuesta) {
+    const sol = CaseEngine.solucion(fase.stage_id);
+    const tipo = Tipos[fase.question ? fase.question.type : fase.type];
+    if (!tipo || !tipo.corrige) return null;
+    const r = tipo.corrige(respuesta, sol);
+    if (!r) return null;
+    const max = (fase.evaluation && fase.evaluation.maximum_score) || 1;
+    return { score: +(r.score * max).toFixed(2), maximum: max, source: 'rule' };
+  },
+
+  /* Corrección semántica contra los criterios declarados en el caso. */
+  async semantica(fase, respuesta) {
+    const crit = (fase.evaluation && fase.evaluation.criteria) || [];
+    const sol = CaseEngine.solucion(fase.stage_id);
+    const esquema = {
+      type: 'object', additionalProperties: false,
+      required: ['criteria', 'score', 'feedback', 'requires_manual_review'],
+      properties: {
+        criteria: {
+          type: 'array', items: {
+            type: 'object', additionalProperties: false,
+            required: ['criterion_id', 'met', 'evidence'],
+            properties: {
+              criterion_id: { type: 'string' },
+              met: { type: 'string', enum: ['si', 'parcial', 'no'] },
+              evidence: { type: 'string' }
+            }
+          }
+        },
+        score: { type: 'number' },
+        feedback: { type: 'string' },
+        requires_manual_review: { type: 'boolean' }
+      }
+    };
+    const sistema = [
+      'Eres evaluador de Bioestadística en un grado de Medicina.',
+      'Evalúas la respuesta de un estudiante contra unos criterios explícitos.',
+      'No inventas criterios nuevos. No premias la extensión ni el vocabulario técnico sin contenido.',
+      'La evidencia que cites debe ser literal de la respuesta del estudiante.',
+      'Si la respuesta es ambigua o roza el límite entre dos niveles, marca requires_manual_review.',
+      'La puntuación va de 0 a ' + ((fase.evaluation && fase.evaluation.maximum_score) || 5) + '.'
+    ].join(' ');
+    const usuario = JSON.stringify({
+      pregunta: CaseEngine.txt(fase.question.text),
+      criterios: crit,
+      rubrica: (CaseEngine.caso.rubrics || []).find(r => r.rubric_id === (fase.evaluation || {}).rubric_id) || null,
+      solucion_del_profesor: sol ? sol.model_answer || null : null,
+      respuesta_del_estudiante: respuesta
+    }, null, 1);
+    const r = await LLM.pedir({ sistema, usuario, esquema });
+    r.source = 'model';
+    r.maximum = (fase.evaluation && fase.evaluation.maximum_score) || 5;
+    return r;
+  },
+
+  /* Lo que distingue este sistema de un examen en línea: leer la traza. */
+  indicadores(traza) {
+    const st = traza.stages.filter(s => s.status === 'completed');
+    const tiempos = st.map(s => s.interaction.time_seconds).filter(Boolean);
+    const ia = traza.ai_interactions;
+    const verificadas = ia.filter(i => i.student_assessment && i.student_assessment.verified).length;
+    const total = st.reduce((a, s) => a + s.interaction.time_seconds, 0);
+    return {
+      fases_completadas: st.length,
+      tiempo_total_segundos: total,
+      tiempo_mediano_por_fase: tiempos.sort((a, b) => a - b)[Math.floor(tiempos.length / 2)] || 0,
+      revisiones_por_fase: +(st.reduce((a, s) => a + s.answer_history.length, 0) / (st.length || 1)).toFixed(2),
+      pistas_solicitadas: traza.hints.length,
+      penalizacion_por_pistas: +traza.hints.reduce((a, h) => a + (h.penalty || 0), 0).toFixed(3),
+      consultas_a_ia: ia.length,
+      tasa_de_verificacion_de_ia: ia.length ? +(verificadas / ia.length).toFixed(2) : null,
+      datos_corregidos: traza.data_modifications.length,
+      correcciones_justificadas: traza.data_modifications.filter(d => d.student_justification).length,
+      confianza_media: (() => {
+        const c = traza.decisions.map(d => d.confidence).filter(x => x != null);
+        return c.length ? +(c.reduce((a, b) => a + b, 0) / c.length).toFixed(2) : null;
+      })()
+    };
+  },
+
+  /* Perfil cualitativo: fortalezas, dificultades y patrón de uso de IA. */
+  async perfil(traza) {
+    const esquema = {
+      type: 'object', additionalProperties: false,
+      required: ['strengths', 'weaknesses', 'patterns', 'competencies', 'main_difficulty', 'narrative'],
+      properties: {
+        strengths: { type: 'array', items: { type: 'string' } },
+        weaknesses: { type: 'array', items: { type: 'string' } },
+        patterns: { type: 'array', items: { type: 'string' } },
+        competencies: {
+          type: 'array', items: {
+            type: 'object', additionalProperties: false,
+            required: ['competency_id', 'level', 'score'],
+            properties: {
+              competency_id: { type: 'string' },
+              level: { type: 'string', enum: ['bajo', 'medio', 'medio-alto', 'alto', 'excelente'] },
+              score: { type: 'number' }
+            }
+          }
+        },
+        main_difficulty: { type: 'string' },
+        narrative: { type: 'string' }
+      }
+    };
+    const sistema = [
+      'Analizas la traza de un estudiante que ha resuelto un caso clínico de Bioestadística.',
+      'No corriges respuestas: describes el proceso. Distingue entre usar IA y usarla bien.',
+      'Basa cada afirmación en hechos de la traza (tiempos, revisiones, verificaciones, correcciones de datos).',
+      'La narrativa es para el profesor: tres o cuatro frases, sin adornos.'
+    ].join(' ');
+    const usuario = JSON.stringify({
+      competencias_del_caso: CaseEngine.caso.competencies,
+      indicadores: this.indicadores(traza),
+      evaluaciones_por_fase: traza.evaluations,
+      decisiones: traza.decisions,
+      uso_de_ia: traza.ai_interactions.map(i => ({
+        proveedor: i.provider, accion: i.student_action, valoracion: i.student_assessment
+      })),
+      informe_final: traza.final_report
+    }, null, 1);
+    return LLM.pedir({ sistema, usuario, esquema, maxTokens: 2500 });
+  },
+
+  notas(traza) {
+    const ev = traza.evaluations;
+    const suma = ev.reduce((a, e) => a + (e.score || 0), 0);
+    const max = ev.reduce((a, e) => a + (e.maximum || 0), 0);
+    const academica = max ? +(10 * suma / max).toFixed(2) : null;
+    const i = this.indicadores(traza);
+    /* Nota de proceso: verificación de la IA, justificación de los cambios y
+       revisión del propio trabajo. Ajusta los pesos a tu criterio docente. */
+    const partes = [
+      i.tasa_de_verificacion_de_ia == null ? null : i.tasa_de_verificacion_de_ia,
+      i.datos_corregidos ? i.correcciones_justificadas / i.datos_corregidos : null,
+      Math.min(1, i.revisiones_por_fase / 2)
+    ].filter(x => x != null);
+    const proceso = partes.length ? +(10 * partes.reduce((a, b) => a + b, 0) / partes.length).toFixed(2) : null;
+    const penal = i.penalizacion_por_pistas;
+    const final = academica == null ? null
+      : +(Math.max(0, (proceso == null ? academica : 0.75 * academica + 0.25 * proceso) * (1 - penal))).toFixed(2);
+    return { academic_score: academica, process_score: proceso, final_score: final };
+  }
+};
+
+/* ---------------------------------------------------------------------
+   6. Interfaz
+   ------------------------------------------------------------------ */
+const App = {
+  modo: 'docencia',
+  faseActual: null,
+  respuesta: null,
+  cronometro: null,
+
+  vista(id) {
+    ['v-inicio', 'v-ajustes', 'v-runner', 'v-informe'].forEach(v => $('#' + v).classList.toggle('oculto', v !== id));
+    $('#btn-guardar').classList.toggle('oculto', id === 'v-inicio' || id === 'v-ajustes');
+    window.scrollTo({ top: 0 });
+  },
+
+  portada() {
+    const c = CaseEngine.caso, m = c.metadata || {};
+    $('#p-titulo').textContent = CaseEngine.txt(m.title || c.case_id);
+    $('#p-subtitulo').textContent = CaseEngine.txt((c.description && c.description.intro) || m.subtitle || '');
+    const f = $('#p-ficha'); f.innerHTML = '';
+    [['Asignatura', m.discipline], ['Ámbito', m.specialty],
+     ['Fases', (c.stages || []).length], ['Duración estimada', (m.estimated_time_minutes || '?') + ' min'],
+     ['Puntuación máxima', m.maximum_score || '—'], ['Versión', c.version]
+    ].forEach(([k, v]) => {
+      const d = el('div'); d.appendChild(el('b', null, String(v))); d.appendChild(document.createTextNode(k));
+      f.appendChild(d);
+    });
+    $('#aviso-intento').textContent = CaseEngine.clave
+      ? 'Este caso incluye la clave de respuestas: sirve para practicar, no para examinar.'
+      : 'Caso publicado sin clave de respuestas: la corrección se hace después, sobre la traza.';
+    $('#migas').textContent = CaseEngine.txt(m.title || c.case_id);
+  },
+
+  empezar() {
+    this.modo = $('#in-modo').value;
+    const est = $('#in-estudiante').value.trim();
+    CaseEngine.vars = CaseEngine.sortear(est || 'demo');
+    Trace.iniciar(CaseEngine.caso, est, this.modo);
+    this.vista('v-runner');
+    this.crono();
+    this.ir(CaseEngine.primera().stage_id);
+  },
+
+  crono() {
+    clearInterval(this.cronometro);
+    this.cronometro = setInterval(() => {
+      const s = Math.floor((Date.now() - Trace.t0) / 1000);
+      $('#reloj').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }, 1000);
+  },
+
+  rail() {
+    const lista = $('#rail-lista'); lista.innerHTML = '';
+    CaseEngine.lineaPrincipal().forEach((s, i) => {
+      const li = el('li', { 'data-n': String(i + 1) }, CaseEngine.txt(s.title || s.stage_id));
+      if (Trace.datos.progress.completed_stages.includes(s.stage_id)) li.classList.add('hecha');
+      if (s.stage_id === this.faseActual.stage_id) { li.classList.add('actual'); li.setAttribute('aria-current', 'step'); }
+      lista.appendChild(li);
+    });
+  },
+
+  ir(id) {
+    const f = CaseEngine.fase(id);
+    if (!f) return this.terminar();
+    this.faseActual = f;
+    this.respuesta = null;
+    Trace.abrirFase(id);
+    this.rail();
+    this.pintar(f);
+  },
+
+  pintar(f) {
+    $('#e-tipo').textContent = ({
+      clinical_intro: 'Primer contacto', data_digitization: 'Los datos en bruto',
+      ai_audit: 'Auditoría de la IA', code_audit: 'Revisión de código',
+      analysis: 'Análisis', report: 'Cierre'
+    })[f.type] || 'Fase ' + f.stage_id;
+    $('#e-titulo').textContent = CaseEngine.txt(f.title || '');
+
+    const rel = $('#e-relato'); rel.innerHTML = '';
+    if (f.narrative) {
+      const d = el('div', { class: 'relato' });
+      d.appendChild(el('p', null, CaseEngine.txt(f.narrative.text)));
+      if (f.narrative.speaker) d.appendChild(el('p', { class: 'voz' }, CaseEngine.txt(f.narrative.speaker)));
+      rel.appendChild(d);
+    }
+    $('#e-objetivo').textContent = CaseEngine.txt(f.objective || '');
+
+    const cuerpo = $('#e-cuerpo'); cuerpo.innerHTML = '';
+    if (f.question && f.question.text) cuerpo.appendChild(el('p', { class: 'pregunta' }, CaseEngine.txt(f.question.text)));
+
+    const zona = $('#e-respuesta'); zona.innerHTML = '';
+    $('#e-feedback').innerHTML = '';
+    $('#e-pistas').innerHTML = '';
+
+    const tipo = Tipos[(f.question && f.question.type) || f.type];
+    if (!tipo) { zona.appendChild(el('div', { class: 'aviso' }, 'Tipo de fase desconocido: ' + f.type)); return; }
+    tipo.pinta.call(tipo, f, zona, (valor) => {
+      this.respuesta = valor;
+      Trace.editar(f.stage_id, valor);
+    });
+
+    const hayPistas = (f.hints || []).length > 0 && (CaseEngine.caso.configuration || {}).allow_hints;
+    $('#btn-pista').classList.toggle('oculto', !hayPistas);
+    $('#btn-continuar').disabled = false;
+    $('#btn-continuar').textContent = f.type === 'report' ? 'Entregar el caso' : 'Enviar y continuar';
+    $('#e-contador').textContent = 'Fase ' + f.stage_id;
+  },
+
+  pista() {
+    const f = this.faseActual;
+    const dadas = Trace.datos.hints.filter(h => h.stage_id === f.stage_id).length;
+    const h = (f.hints || [])[dadas];
+    if (!h) return;
+    Trace.pista(f.stage_id, h);
+    $('#e-pistas').appendChild(el('div', { class: 'pista' }, CaseEngine.txt(h.text) +
+      (h.penalty ? '  (penalización ' + (h.penalty * 100) + ' %)' : '')));
+    if (!(f.hints || [])[dadas + 1]) $('#btn-pista').disabled = true;
+  },
+
+  async continuar() {
+    const f = this.faseActual;
+    const tipo = Tipos[(f.question && f.question.type) || f.type];
+    const r = tipo.lee($('#e-respuesta'));
+    const vacia = r == null || r === '' || (Array.isArray(r) && !r.length);
+    if (vacia && f.question && f.question.required !== false) {
+      $('#e-feedback').innerHTML = '';
+      $('#e-feedback').appendChild(el('div', { class: 'aviso' }, 'Responde antes de continuar. Si no sabes qué contestar, escribe qué te falta para poder hacerlo.'));
+      return;
+    }
+    $('#btn-continuar').disabled = true;
+    Trace.cerrarFase(f.stage_id, r, (f.question && f.question.type) || f.type);
+
+    if (f.type === 'report' || (f.question && f.question.type === 'final_report')) {
+      Trace.datos.final_report = Object.assign({ submitted_at: ahora() }, r);
+    }
+    if (r && r.answer && r.justification !== undefined) {
+      Trace.decision(f.stage_id, 'method_selection', { selected_method: r.answer }, r.justification, r.confidence);
+    }
+
+    /* Puntuación: regla si la hay, modelo si el caso lo pide y estamos en docencia. */
+    let ev = Assessment.automatica(f, r);
+    if (!ev && this.modo === 'docencia' && LLM.clave() && f.evaluation && f.evaluation.type === 'semantic') {
+      $('#e-feedback').innerHTML = '';
+      $('#e-feedback').appendChild(el('div', { class: 'pista' }, 'Revisando tu respuesta…'));
+      try {
+        const s = await Assessment.semantica(f, r);
+        ev = { score: s.score, maximum: s.maximum, source: 'model', criteria: s.criteria, feedback: s.feedback, requires_manual_review: s.requires_manual_review };
+      } catch (e) {
+        ev = null;
+        $('#e-feedback').innerHTML = '';
+        $('#e-feedback').appendChild(el('div', { class: 'aviso' }, 'No se ha podido evaluar ahora: ' + e.message + ' La respuesta queda registrada igualmente.'));
+      }
+    }
+    if (ev) {
+      Trace.datos.evaluations.push(Object.assign({ stage_id: f.stage_id, timestamp: ahora() }, ev));
+      Trace.faseActual().score = ev.score;
+      if (this.modo === 'docencia' && ev.feedback) {
+        $('#e-feedback').innerHTML = '';
+        $('#e-feedback').appendChild(el('div', { class: 'pista' }, ev.feedback));
+      }
+    } else {
+      Trace.faseActual().requires_manual_review = true;
+    }
+    Trace.guardar();
+
+    const ctx = { score: ev ? ev.score : null, answer: r && r.answer ? r.answer : r };
+    const sig = CaseEngine.siguiente(f, ctx);
+    $('#btn-continuar').disabled = false;
+    if (!sig) return this.terminar();
+    setTimeout(() => this.ir(sig), this.modo === 'docencia' && ev && ev.feedback ? 1400 : 60);
+  },
+
+  async terminar() {
+    clearInterval(this.cronometro);
+    Trace.terminar();
+    Object.assign(Trace.datos.scores, Assessment.notas(Trace.datos));
+    this.informe();
+    this.vista('v-informe');
+  },
+
+  informe() {
+    const t = Trace.datos;
+    const s = t.scores;
+    $('#i-resumen').textContent = s.final_score != null
+      ? 'Nota provisional ' + s.final_score + ' sobre 10. Lo que sigue describe cómo has llegado hasta ahí.'
+      : 'Sin la clave de respuestas no hay nota todavía. Lo que sigue describe cómo has trabajado.';
+
+    const comp = $('#i-competencias'); comp.innerHTML = '';
+    const perfil = t.process_analysis;
+    (CaseEngine.caso.competencies || []).forEach(c => {
+      const p = perfil && (perfil.competencies || []).find(x => x.competency_id === c.id);
+      const d = el('div', { class: 'medida' });
+      d.appendChild(el('span', null, c.name));
+      if (p) {
+        const barra = el('div', { class: 'barra-nivel' });
+        const i = el('i'); i.style.width = Math.round(p.score * 10) + '%';
+        barra.appendChild(i);
+        d.append(barra, el('b', null, p.level));
+      } else {
+        d.appendChild(el('b', null, '—'));
+      }
+      comp.appendChild(d);
+    });
+
+    const pr = $('#i-proceso'); pr.innerHTML = '';
+    const ind = Assessment.indicadores(t);
+    const filas = [
+      ['Tiempo total', Math.round(ind.tiempo_total_segundos / 60) + ' min'],
+      ['Revisiones por fase', ind.revisiones_por_fase],
+      ['Pistas', ind.pistas_solicitadas],
+      ['Consultas a IA', ind.consultas_a_ia],
+      ['IA verificada', ind.tasa_de_verificacion_de_ia == null ? '—' : Math.round(ind.tasa_de_verificacion_de_ia * 100) + ' %'],
+      ['Datos corregidos', ind.datos_corregidos + ' (' + ind.correcciones_justificadas + ' justificados)'],
+      ['Nota académica', s.academic_score ?? '—'],
+      ['Nota de proceso', s.process_score ?? '—']
+    ];
+    filas.forEach(([k, v]) => {
+      const d = el('div', { class: 'medida' });
+      d.append(el('span', null, k), el('b', null, String(v)));
+      pr.appendChild(d);
+    });
+    if (perfil) {
+      const caja = el('div', { style: 'margin-top:16px' });
+      (perfil.patterns || []).forEach(p => caja.appendChild(el('span', { class: 'etiqueta' }, p)));
+      (perfil.weaknesses || []).forEach(p => caja.appendChild(el('span', { class: 'etiqueta baja' }, p)));
+      if (perfil.narrative) caja.appendChild(el('p', { style: 'margin-top:12px' }, perfil.narrative));
+      pr.appendChild(caja);
+    }
+    $('#i-json').textContent = JSON.stringify(t, null, 2);
+  },
+
+  async evaluarConIA() {
+    const b = $('#btn-evaluar'); const txt = b.textContent;
+    b.disabled = true; b.textContent = 'Analizando el proceso…';
+    try {
+      Trace.datos.process_analysis = await Assessment.perfil(Trace.datos);
+      Trace.guardar(); this.informe();
+    } catch (e) {
+      alert('No se ha podido completar el análisis: ' + e.message);
+    } finally { b.disabled = false; b.textContent = txt; }
+  },
+
+  /* Corrección en lote: el profesor carga trazas ya entregadas. */
+  async corregirLote(trazas) {
+    const filas = [];
+    for (const t of trazas) {
+      for (const f of t.stages) {
+        if (f.score != null || !f.answer) continue;
+        const fase = CaseEngine.fase(f.stage_id); if (!fase) continue;
+        let ev = Assessment.automatica(fase, f.answer.final);
+        if (!ev && LLM.clave() && fase.evaluation) {
+          try { ev = await Assessment.semantica(fase, f.answer.final); } catch (e) { ev = null; }
+        }
+        if (ev) { f.score = ev.score; t.evaluations.push(Object.assign({ stage_id: f.stage_id }, ev)); }
+      }
+      Object.assign(t.scores, Assessment.notas(t));
+      filas.push({ estudiante: t.attempt.student_id, intento: t.attempt.attempt_id, notas: t.scores });
+    }
+    const b = new Blob([JSON.stringify({ corregido_el: ahora(), trazas, resumen: filas }, null, 2)], { type: 'application/json' });
+    const a = el('a'); a.href = URL.createObjectURL(b); a.download = 'correccion_lote.json'; a.click();
+    alert('Corregidas ' + trazas.length + ' trazas. Se ha descargado el fichero con el detalle.');
+  }
+};
+
+/* ---------------------------------------------------------------------
+   7. Caso de demostración — sustitúyelo por tus ficheros JSON
+   ------------------------------------------------------------------ */
+const CASO_DEMO = {
+  case_engine_version: '1.0.0',
+  case: {
+    case_id: 'BIO_DM_001', version: '1.0', status: 'published',
+    metadata: {
+      title: 'El paciente que no queremos perder',
+      subtitle: 'Una investigación clínica en Atención Primaria',
+      specialty: 'Atención Primaria', discipline: 'Bioestadística', target: 'Medicina',
+      difficulty: 'medium', estimated_time_minutes: 50, maximum_score: 100
+    },
+    description: {
+      intro: 'Una consulta de Atención Primaria revisa las glucemias de sus pacientes y sospecha que algo no cuadra en los registros.',
+      student_role: 'Eres quien analiza los datos.'
+    },
+    variables: {
+      umbral: { type: 'choice', values: [125, 126], default: 126 },
+      n_pacientes: { type: 'integer_range', min: 40, max: 80, default: 60 }
+    },
+    competencies: [
+      { id: 'C01', name: 'Traducción clínica-estadística', weight: 15 },
+      { id: 'C02', name: 'Gestión de datos', weight: 15 },
+      { id: 'C03', name: 'Razonamiento estadístico', weight: 20 },
+      { id: 'C04', name: 'Elección del método', weight: 15 },
+      { id: 'C06', name: 'Uso crítico de IA', weight: 20 },
+      { id: 'C07', name: 'Interpretación clínica', weight: 15 }
+    ],
+    rubrics: [{
+      rubric_id: 'RUB01', levels: [
+        { level: 0, description: 'No demuestra comprensión.', score: 0 },
+        { level: 1, description: 'Comprensión parcial.', score: 1 },
+        { level: 2, description: 'Resuelve correctamente.', score: 2 },
+        { level: 3, description: 'Resuelve y justifica.', score: 3 },
+        { level: 4, description: 'Resuelve, justifica, verifica y contextualiza.', score: 4 }
+      ]
+    }],
+    configuration: {
+      progressive_reveal: true, randomize_values: true, allow_back_navigation: false,
+      allow_hints: true, allow_ai: true, record_ai_interactions: true,
+      record_data_changes: true, record_events: true, autosave_seconds: 5
+    },
+    stages: [
+      {
+        stage_id: 'S01', order: 1, type: 'clinical_intro', title: 'Una preocupación en la consulta',
+        narrative: {
+          text: 'Llevamos {{n_pacientes}} pacientes con glucemias apuntadas a mano desde hace meses. Tengo la sensación de que estamos clasificando mal a algunos, pero no sabría decir a cuántos.',
+          speaker: 'Médica responsable de la consulta'
+        },
+        objective: 'Decidir qué necesitas saber antes de tocar un solo dato.',
+        question: {
+          question_id: 'Q01', type: 'open_text', required: true, min_length: 50,
+          text: 'Antes de analizar nada, ¿qué información necesitas organizar y por qué?'
+        },
+        competencies: [{ competency_id: 'C01', weight: 1 }, { competency_id: 'C02', weight: 1 }],
+        evaluation: {
+          type: 'semantic', rubric_id: 'RUB01', maximum_score: 5,
+          criteria: [
+            { id: 'CR01', description: 'Identifica la variable clínica principal y su escala de medida' },
+            { id: 'CR02', description: 'Pregunta por el criterio diagnóstico vigente' },
+            { id: 'CR03', description: 'Anticipa problemas de calidad del registro manual' }
+          ]
+        },
+        hints: [{ hint_id: 'H01', text: 'Piensa en qué vas a comparar y con qué criterio.', penalty: 0.02 }],
+        next: {
+          rules: [
+            { if: { score_gte: 3 }, go_to: 'S02' },
+            { if: { score_lt: 3 }, go_to: 'S01B' }
+          ],
+          default: 'S02'
+        }
+      },
+      {
+        stage_id: 'S01B', remedial: true, type: 'clinical_intro', title: 'Volvamos un momento atrás',
+        narrative: { text: 'Antes de seguir: sin saber qué variable miras y con qué corte, cualquier análisis posterior hereda el error.', speaker: 'Nota del tutor' },
+        question: {
+          question_id: 'Q01B', type: 'single_choice', required: true,
+          text: '¿Cuál es la primera decisión que hay que fijar?',
+          options: [
+            { id: 'A', label: 'El criterio numérico que separa a un paciente positivo de uno negativo.' },
+            { id: 'B', label: 'El programa con el que se hará el análisis.' },
+            { id: 'C', label: 'El número de gráficos del informe final.' }
+          ]
+        },
+        evaluation: { type: 'rule', maximum_score: 2 },
+        next: { default: 'S02' }
+      },
+      {
+        stage_id: 'S02', order: 2, type: 'data_digitization', title: 'La hoja de consulta',
+        narrative: { text: 'Esta es la tabla tal como está apuntada. Nadie la ha revisado.', speaker: 'Auxiliar de la consulta' },
+        objective: 'Dejar los datos en condiciones de ser analizados, sin borrar lo que no entiendas.',
+        question: { question_id: 'Q02', type: 'data_cleaning', required: true, text: 'Revisa la tabla y corrige lo que consideres necesario. Cada cambio te pedirá una justificación.' },
+        expected_schema: { variables: [{ name: 'edad', type: 'numeric' }, { name: 'glucosa', type: 'numeric' }, { name: 'diagnostico', type: 'categorical' }] },
+        raw_data: [
+          { edad: '54', glucosa: '112', diagnostico: 'no' },
+          { edad: '61', glucosa: '1,25', diagnostico: 'no' },
+          { edad: '250', glucosa: '138', diagnostico: 'si' },
+          { edad: '47', glucosa: '', diagnostico: 'no' },
+          { edad: '58', glucosa: '126', diagnostico: 'no' },
+          { edad: '66', glucosa: '141', diagnostico: 'si' }
+        ],
+        evaluation: { type: 'rule', maximum_score: 10 },
+        next: { default: 'S03' }
+      },
+      {
+        stage_id: 'S03', order: 3, type: 'analysis', title: '¿Qué mirar y qué dejar fuera?',
+        objective: 'Elegir la información pertinente para la comparación que interesa a la consulta.',
+        question: {
+          question_id: 'Q03', type: 'variable_selection', required: true,
+          text: 'Queremos comparar a los pacientes con diagnóstico y sin él. ¿Qué información seleccionarías?',
+          options: [
+            { id: 'V01', label: 'Edad' }, { id: 'V02', label: 'Glucosa' },
+            { id: 'V03', label: 'Diagnóstico' }, { id: 'V04', label: 'Número de historia clínica' }
+          ]
+        },
+        evaluation: { type: 'rule', maximum_score: 5 },
+        next: { default: 'S04' }
+      },
+      {
+        stage_id: 'S04', order: 4, type: 'analysis', title: 'El planteamiento',
+        objective: 'Decidir cómo se analiza, no qué prueba se teclea.',
+        question: {
+          question_id: 'Q04', type: 'method_selection', required: true, requires_justification: true,
+          text: 'Dos grupos independientes de pacientes y sus niveles de glucosa. ¿Cómo planteas el análisis?',
+          options: [
+            { id: 'M01', label: 'Compararía las distribuciones y decidiría el procedimiento según sus características.' },
+            { id: 'M02', label: 'Compararía directamente los porcentajes.' },
+            { id: 'M03', label: 'Estudiaría la relación entre dos variables categóricas.' },
+            { id: 'M04', label: 'Usaría un procedimiento para comparar tres o más grupos.' }
+          ]
+        },
+        evaluation: { type: 'rule', maximum_score: 10 },
+        next: { default: 'S05' }
+      },
+      {
+        stage_id: 'S05', order: 5, type: 'ai_audit', title: 'Lo que ha respondido la IA',
+        ai_simulation: {
+          provider: 'Gemini',
+          response: 'Los pacientes con mayor glucosa presentan más diabetes, por lo que podemos concluir que una glucosa elevada causa diabetes.'
+        },
+        objective: 'Decidir si esa respuesta entra o no en tu informe.',
+        question: { question_id: 'Q05', type: 'ai_audit', required: true, text: '¿Aceptarías esta conclusión? Explica qué comprobarías antes de utilizarla.' },
+        evaluation: {
+          type: 'semantic', maximum_score: 10,
+          criteria: [
+            { id: 'A01', description: 'Distingue asociación de causalidad' },
+            { id: 'A02', description: 'Señala la circularidad: el diagnóstico se define a partir de la glucosa' },
+            { id: 'A03', description: 'Propone una comprobación concreta' }
+          ]
+        },
+        next: { default: 'S06' }
+      },
+      {
+        stage_id: 'S06', order: 6, type: 'code_audit', title: 'El código que vino con la respuesta',
+        code: "from scipy.stats import ttest_ind\nresultado = ttest_ind(grupo1, grupo2)\nprint(resultado.pvalue)",
+        question: { question_id: 'Q06', type: 'code_audit', required: true, text: 'Antes de aceptar este resultado, ¿qué comprobarías?' },
+        evaluation: {
+          type: 'semantic', maximum_score: 10,
+          criteria: [
+            { id: 'B01', description: 'Menciona los valores ausentes' },
+            { id: 'B02', description: 'Menciona la distribución o los supuestos' },
+            { id: 'B03', description: 'Menciona cómo se han definido los grupos' }
+          ]
+        },
+        next: { default: 'S07' }
+      },
+      {
+        stage_id: 'S07', order: 7, type: 'analysis', title: 'Cambia el criterio',
+        narrative: { text: 'El laboratorio nos avisa: a partir de hoy se consideran positivos los valores de {{umbral}} o superiores.', speaker: 'Aviso del laboratorio' },
+        question: {
+          question_id: 'Q07', type: 'numeric', required: true, unit: 'pacientes',
+          text: 'Con la tabla que has dejado limpia, ¿cuántos pacientes cambian de clasificación con el nuevo criterio?'
+        },
+        evaluation: { type: 'rule', maximum_score: 10 },
+        next: { default: 'S08' }
+      },
+      {
+        stage_id: 'S08', order: 8, type: 'report', title: 'Lo que le dirías a la consulta',
+        objective: 'Reconstruir tu propio razonamiento, incluido lo que no funcionó.',
+        question: { question_id: 'Q08', type: 'final_report', required: true, text: 'Redacta el informe final.' },
+        evaluation: {
+          type: 'semantic', maximum_score: 20,
+          criteria: [
+            { id: 'F01', description: 'El problema clínico y su traducción estadística son coherentes' },
+            { id: 'F02', description: 'Justifica el método con los datos que tiene' },
+            { id: 'F03', description: 'La interpretación clínica no excede lo que permiten los datos' },
+            { id: 'F04', description: 'Declara el uso de IA y lo que corrigió de ella' }
+          ]
+        },
+        next: { default: null }
+      }
+    ]
+  },
+  /* Clave de respuestas: quítala del fichero publicado en modo examen. */
+  answer_key: {
+    stages: [
+      { stage_id: 'S01B', correct: ['A'] },
+      {
+        stage_id: 'S02',
+        data_quality_events: [
+          { id: 'DQ01', row: 1, variable: 'glucosa', problem: 'decimal_format', expected_interpretation: '125' },
+          { id: 'DQ02', row: 2, variable: 'edad', problem: 'impossible_value', expected_action: 'remove' },
+          { id: 'DQ03', row: 3, variable: 'glucosa', problem: 'missing', expected_action: 'remove' }
+        ]
+      },
+      { stage_id: 'S03', correct: ['V02', 'V03'] },
+      { stage_id: 'S04', correct: ['M01'], model_answer: 'Comparación de una variable cuantitativa entre dos grupos independientes, decidiendo el procedimiento tras examinar distribución y varianzas.' },
+      { stage_id: 'S07', expected: 2, tolerance: 0 }
+    ]
+  }
+};
+
+/* ---------------------------------------------------------------------
+   8. Arranque y sucesos
+   ------------------------------------------------------------------ */
+function pintarModelos(lista) {
+  const s = $('#in-modelo'); s.innerHTML = '';
+  (lista || LLM.catalogo).forEach(m => {
+    const id = typeof m === 'string' ? m : m.id;
+    s.appendChild(el('option', { value: id }, typeof m === 'string' ? m : m.nombre));
+  });
+  s.value = LLM.modelo();
+}
+
+function leerJSON(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => { try { res(JSON.parse(r.result)); } catch (e) { rej(new Error('El fichero no es JSON válido.')); } };
+    r.onerror = () => rej(new Error('No se ha podido leer el fichero.'));
+    r.readAsText(file);
+  });
+}
+
+function iniciar() {
+  CaseEngine.cargar(clon(CASO_DEMO), 'demo');
+  App.portada();
+  pintarModelos();
+  $('#in-clave-api').value = LLM.clave();
+  $('#in-esfuerzo').value = LLM.esfuerzo();
+
+  $('#btn-ajustes').onclick = () => App.vista('v-ajustes');
+  $('#btn-empezar').onclick = () => App.empezar();
+  $('#btn-continuar').onclick = () => App.continuar();
+  $('#btn-pista').onclick = () => App.pista();
+  $('#btn-guardar').onclick = () => Trace.descargar();
+  $('#btn-descargar-traza').onclick = () => Trace.descargar();
+  $('#btn-evaluar').onclick = () => App.evaluarConIA();
+  $('#btn-reiniciar').onclick = () => location.reload();
+  $('#btn-caso-demo').onclick = () => { CaseEngine.cargar(clon(CASO_DEMO), 'demo'); App.portada(); };
+
+  $('#btn-guardar-ajustes').onclick = () => {
+    Store.set(LLM.CLAVE, $('#in-clave-api').value.trim());
+    Store.set(LLM.MODELO, $('#in-modelo').value);
+    Store.set(LLM.ESFUERZO, $('#in-esfuerzo').value);
+    $('#estado-conexion').textContent = 'Ajustes guardados en este navegador.';
+    App.vista('v-inicio');
+  };
+  $('#btn-probar').onclick = async () => {
+    const e = $('#estado-conexion'); e.textContent = 'Probando…';
+    Store.set(LLM.CLAVE, $('#in-clave-api').value.trim());
+    try {
+      const r = await LLM.pedir({ sistema: 'Responde con una sola palabra.', usuario: 'Di: preparado', modelo: $('#in-modelo').value, maxTokens: 400 });
+      e.textContent = 'Conexión correcta. El modelo responde: ' + r;
+    } catch (err) { e.textContent = err.message; }
+  };
+  $('#btn-listar').onclick = async () => {
+    const e = $('#estado-conexion'); e.textContent = 'Consultando modelos…';
+    Store.set(LLM.CLAVE, $('#in-clave-api').value.trim());
+    try { pintarModelos(await LLM.modelosDisponibles()); e.textContent = 'Lista actualizada desde tu cuenta.'; }
+    catch (err) { e.textContent = err.message; }
+  };
+
+  $('#in-caso').onchange = async (ev) => {
+    if (!ev.target.files[0]) return;
+    try { CaseEngine.cargar(await leerJSON(ev.target.files[0]), 'demo'); App.portada(); }
+    catch (e) { alert(e.message); }
+  };
+  $('#in-clave').onchange = async (ev) => {
+    if (!ev.target.files[0]) return;
+    try { CaseEngine.cargarClave(await leerJSON(ev.target.files[0])); App.portada(); }
+    catch (e) { alert(e.message); }
+  };
+  $('#btn-corregir').onclick = async () => {
+    const fs = [...$('#in-trazas').files];
+    if (!fs.length) return alert('Carga primero las trazas que quieres corregir.');
+    try { await App.corregirLote(await Promise.all(fs.map(leerJSON))); }
+    catch (e) { alert(e.message); }
+  };
+
+  /* Autoguardado y salida accidental. */
+  setInterval(() => Trace.datos && Trace.guardar(), 5000);
+  window.addEventListener('beforeunload', (e) => {
+    if (Trace.datos && Trace.datos.attempt.status === 'in_progress') { e.preventDefault(); e.returnValue = ''; }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', iniciar);
+})();
+</script>
+</body>
+</html>
