@@ -1,0 +1,396 @@
+{
+  "case_engine_version": "1.0.0",
+  "case": {
+    "case_id": "BIO_DM_002",
+    "version": "1.0",
+    "status": "draft",
+    "metadata": {
+      "title": "Valoración del Riesgo en Cribado de Cáncer Colorrectal",
+      "subtitle": "Bioestadística en medicina clínica",
+      "discipline": "Bioestadística, grado de Medicina",
+      "specialty": "Atención Primaria",
+      "target": "Bioestadística, grado de Medicina",
+      "difficulty": "medium",
+      "estimated_time_minutes": 36,
+      "maximum_score": 30
+    },
+    "description": {
+      "intro": "En este caso clínico, se presenta una situación donde un programa de cribado de cáncer colorrectal produce resultados positivos en pacientes. Tu tarea es evaluar y comunicar adecuadamente las probabilidades a los pacientes angustiados, considerando la sensibilidad, la especificidad y la prevalencia de la enfermedad.",
+      "student_role": "Eres quien analiza los datos."
+    },
+    "variables": {
+      "prevalencia": {
+        "type": "integer_range",
+        "min": 1,
+        "max": 100,
+        "default": 51
+      },
+      "pacientes_totales": {
+        "type": "integer_range",
+        "min": 50,
+        "max": 500,
+        "default": 275
+      }
+    },
+    "competencies": [
+      {
+        "id": "C01",
+        "name": "Comprensión de pruebas diagnósticas",
+        "weight": 0.25
+      },
+      {
+        "id": "C02",
+        "name": "Interpretación de resultados",
+        "weight": 0.25
+      },
+      {
+        "id": "C03",
+        "name": "Comunicación efectiva",
+        "weight": 0.25
+      },
+      {
+        "id": "C04",
+        "name": "Razonamiento estadístico",
+        "weight": 0.25
+      }
+    ],
+    "rubrics": [
+      {
+        "rubric_id": "RUB01",
+        "levels": [
+          {
+            "level": 0,
+            "description": "No demuestra comprensión.",
+            "score": 0
+          },
+          {
+            "level": 1,
+            "description": "Comprensión parcial.",
+            "score": 1
+          },
+          {
+            "level": 2,
+            "description": "Resuelve correctamente.",
+            "score": 2
+          },
+          {
+            "level": 3,
+            "description": "Resuelve y justifica.",
+            "score": 3
+          },
+          {
+            "level": 4,
+            "description": "Resuelve, justifica, verifica y contextualiza.",
+            "score": 4
+          }
+        ]
+      }
+    ],
+    "configuration": {
+      "progressive_reveal": true,
+      "randomize_values": true,
+      "allow_back_navigation": false,
+      "allow_hints": true,
+      "allow_ai": true,
+      "record_ai_interactions": true,
+      "record_data_changes": true,
+      "record_events": true,
+      "autosave_seconds": 5
+    },
+    "stages": [
+      {
+        "stage_id": "S01",
+        "order": 1,
+        "type": "clinical_intro",
+        "title": "Introducción a la Sensibilidad y Especificidad",
+        "objective": "Diferenciar la sensibilidad y la especificidad de la prueba utilizada.",
+        "question": {
+          "question_id": "Q1",
+          "type": "open_text",
+          "text": "Define en tus propias palabras qué significan sensibilidad y especificidad.",
+          "required": true
+        },
+        "evaluation": {
+          "type": "rule",
+          "maximum_score": 5,
+          "criteria": [
+            {
+              "id": "C1",
+              "description": "El estudiante define correctamente la sensibilidad."
+            },
+            {
+              "id": "C2",
+              "description": "El estudiante define correctamente la especificidad."
+            }
+          ]
+        },
+        "next": {
+          "default": "S02"
+        },
+        "narrative": {
+          "text": "Recibes los resultados de una nueva prueba de cribado para cáncer colorrectal. La prueba tiene una sensibilidad del 90% y una especificidad del 95%. Tu tarea inicial es entender estos conceptos y cómo se relacionan con el resultado positivo de un paciente.",
+          "speaker": "Doctor"
+        },
+        "competencies": [
+          {
+            "competency_id": "C01",
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "stage_id": "S02",
+        "order": 2,
+        "type": "data_digitization",
+        "title": "Contexto del Programa de Cribado",
+        "objective": "Razonar cómo la prevalencia afecta a la interpretación de un resultado positivo.",
+        "question": {
+          "question_id": "Q2",
+          "type": "numeric",
+          "text": "Si se han analizado {{pacientes_totales}} pacientes, ¿cuántos se espera que realmente tengan cáncer colorrectal?",
+          "required": true
+        },
+        "evaluation": {
+          "type": "rule",
+          "maximum_score": 5
+        },
+        "next": {
+          "default": "S03"
+        },
+        "narrative": {
+          "text": "Para proporcionar un contexto a los resultados obtenidos, necesitas saber cuántos pacientes se han sometido a la prueba y cuál es la prevalencia del cáncer colorrectal en la población analizada. Considera que realizaste un análisis anterior y encontraste que el cáncer colorrectal presenta en esta comunidad una prevalencia aproximada de {{prevalencia}}%.",
+          "speaker": "Doctor"
+        },
+        "competencies": [
+          {
+            "competency_id": "C02",
+            "weight": 1
+          }
+        ],
+        "hints": [
+          {
+            "hint_id": "H2",
+            "text": "Recuerda que la prevalencia se refiere a la proporción de casos en la población total.",
+            "penalty": 0.02
+          }
+        ]
+      },
+      {
+        "stage_id": "S03",
+        "order": 3,
+        "type": "analysis",
+        "title": "Cálculo de Probabilidades Posprueba",
+        "objective": "Calcular la probabilidad de que un paciente sea portador de la enfermedad tras un resultado positivo.",
+        "question": {
+          "question_id": "Q3",
+          "type": "numeric",
+          "text": "¿Cuál es la probabilidad de que un paciente con resultado positivo esté realmente enfermo?",
+          "required": true
+        },
+        "evaluation": {
+          "type": "rule",
+          "maximum_score": 5
+        },
+        "next": {
+          "default": "S04"
+        },
+        "narrative": {
+          "text": "Con los datos anteriores, ahora necesitas calcular la probabilidad de que un paciente que ha obtenido un resultado positivo efectivamente tenga cáncer colorrectal. Utiliza la fórmula de probabilidad posprueba para hacerlo.",
+          "speaker": "Doctor"
+        },
+        "competencies": [
+          {
+            "competency_id": "C04",
+            "weight": 1
+          }
+        ],
+        "hints": [
+          {
+            "hint_id": "H3",
+            "text": "Usa la fórmula de probabilidad que relaciona la sensibilidad, especificidad, y prevalencia.",
+            "penalty": 0.02
+          }
+        ]
+      },
+      {
+        "stage_id": "S04",
+        "order": 4,
+        "type": "ai_audit",
+        "title": "Comunicación al Paciente",
+        "objective": "Comunicar efectivamente el riesgo al paciente.",
+        "question": {
+          "question_id": "Q4",
+          "type": "open_text",
+          "text": "¿Cómo comunicarías a un paciente que ha obtenido un resultado positivo sobre su riesgo real de tener cáncer?",
+          "required": true
+        },
+        "evaluation": {
+          "type": "semantic",
+          "maximum_score": 5,
+          "criteria": [
+            {
+              "id": "C1",
+              "description": "El estudiante explica claramente el significado del resultado."
+            },
+            {
+              "id": "C2",
+              "description": "El estudiante aborda la incertidumbre en la interpretación."
+            },
+            {
+              "id": "C3",
+              "description": "El estudiante ofrece apoyo emocional al paciente."
+            }
+          ],
+          "rubric_id": "RUB01"
+        },
+        "next": {
+          "default": "S05"
+        },
+        "narrative": {
+          "text": "Ahora que tienes la probabilidad calculada, es crucial que sepas cómo comunicar estos resultados a los pacientes de manera clara y comprensible, sin crearles más angustia. Piensa en cómo presentar esta información, asegurándote de ser honesto sobre la incertidumbre.",
+          "speaker": "Doctor"
+        },
+        "competencies": [
+          {
+            "competency_id": "C03",
+            "weight": 1
+          }
+        ],
+        "hints": [
+          {
+            "hint_id": "H4",
+            "text": "Considera un enfoque equilibrado entre la claridad informativa y la empatía.",
+            "penalty": 0.02
+          }
+        ]
+      },
+      {
+        "stage_id": "S05",
+        "order": 5,
+        "type": "report",
+        "title": "Informe Final",
+        "objective": "Redactar un informe final con tus hallazgos y reflexiones.",
+        "question": {
+          "question_id": "Q5",
+          "type": "final_report",
+          "text": "Escribe un informe resumido de todo lo aprendido en este proceso, enfocándote en los aspectos más importantes a recordar y cómo mejorarías la comunicación con los pacientes en el futuro.",
+          "required": true
+        },
+        "evaluation": {
+          "type": "semantic",
+          "maximum_score": 5,
+          "criteria": [
+            {
+              "id": "C1",
+              "description": "El informe resume adecuadamente los pasos tomados."
+            },
+            {
+              "id": "C2",
+              "description": "El estudiante reflexiona sobre la comunicación al paciente."
+            },
+            {
+              "id": "C3",
+              "description": "Se sugieren mejoras para el futuro en el manejo de resultados."
+            }
+          ],
+          "rubric_id": "RUB01"
+        },
+        "next": {
+          "default": null
+        },
+        "narrative": {
+          "text": "Has completado el análisis y la comunicación de los resultados a los pacientes del programa de cribado. Reflexiona sobre todo el proceso y cómo lo manejaste.",
+          "speaker": "Doctor"
+        },
+        "competencies": [
+          {
+            "competency_id": "C01",
+            "weight": 1
+          },
+          {
+            "competency_id": "C02",
+            "weight": 1
+          },
+          {
+            "competency_id": "C03",
+            "weight": 1
+          },
+          {
+            "competency_id": "C04",
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "stage_id": "S06",
+        "order": 6,
+        "type": "report",
+        "title": "Refuerzo Opcional",
+        "objective": "Clarificar conceptos confusos y asegurar el entendimiento de los alumnos.",
+        "question": {
+          "question_id": "Q6",
+          "type": "open_text",
+          "text": "¿Qué conceptos te resultan confusos o difíciles de entender sobre la prueba de cribado?",
+          "required": true
+        },
+        "evaluation": {
+          "type": "semantic",
+          "maximum_score": 5,
+          "criteria": [
+            {
+              "id": "C1",
+              "description": "El estudiante expresa sus confusiones claramente."
+            },
+            {
+              "id": "C2",
+              "description": "Se ofrecen ejemplos relevantes para aclarar conceptos."
+            }
+          ],
+          "rubric_id": "RUB01"
+        },
+        "next": {
+          "default": null
+        },
+        "narrative": {
+          "text": "Se ha observado que algunos alumnos presentan dificultades entendiendo cómo se relacionan las diferentes métricas de la prueba diagnóstica. Abre un diálogo para clarificar estos temas.",
+          "speaker": "Monitor"
+        },
+        "competencies": [
+          {
+            "competency_id": "C01",
+            "weight": 1
+          },
+          {
+            "competency_id": "C02",
+            "weight": 1
+          }
+        ]
+      }
+    ]
+  },
+  "answer_key": {
+    "case_id": "BIO_DM_002",
+    "stages": [
+      {
+        "stage_id": "S01",
+        "correct": [
+          "La sensibilidad es la capacidad de detectar correctamente la enfermedad en pacientes enfermos.",
+          "La especificidad es la capacidad de identificar correctamente a los sanos."
+        ]
+      },
+      {
+        "stage_id": "S02",
+        "correct": [
+          "Se espera que {{pacientes_totales}} * ({{prevalencia}} / 100) tengan cáncer colorrectal."
+        ]
+      },
+      {
+        "stage_id": "S03",
+        "correct": [
+          "Se calcula aplicando la fórmula: P(enfermo | positivo) = (Sensibilidad * Prevalencia) / ((Sensibilidad * Prevalencia) + ((1 - Especificidad) * (1 - Prevalencia)))."
+        ]
+      }
+    ]
+  }
+}
+CasuístIA · esqueleto de referencia. Fernando Borrás Rocher, Universidad Miguel Hernández de Elche. Publicado como fichero único para GitHub Pages.
